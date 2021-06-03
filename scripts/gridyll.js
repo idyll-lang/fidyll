@@ -146,23 +146,38 @@ console.log('parsedContent', JSON.stringify(parsedContent, null, 2));
 
 
 const serializeIdyll = require('./serialize-idyll');
+const Idyll = require('idyll');
 
-const outputText = serializeIdyll(header, parsedContent);
-console.log(outputText)
+const targets = [{
+    name: 'scroller',
+    output: 'scroller'
+}, {
+    name: 'stepper',
+    output: 'slides'
+}];
+
+targets.forEach((target, i) => {
+    const outputText = serializeIdyll(target.name, header, parsedContent);
+    console.log(outputText)
+
+    const idyllPath = path.join(__dirname, '..', 'output', target.output, 'index.idyll') 
+    fs.writeFileSync(idyllPath, outputText);
+
+    // if (i === 0) {
+        const idyll = Idyll({
+            inputFile: idyllPath,
+            watch: true,
+            port: 3000 + i
+          });
+          
+          idyll.build({ live: true })
+               .on('update', () => {}) // the compilation finished.
+               .on('error', () => {}) // there was an error
+    // }
+})
 
 
 
 
-const idyllPath = path.join(__dirname, '..', 'output', 'scroller', 'index.idyll') 
-fs.writeFileSync(idyllPath, outputText);
 
-var Idyll = require('idyll');
 
-const idyll = Idyll({
-  inputFile: idyllPath,
-  watch: true
-});
-
-idyll.build({ live: true })
-     .on('update', () => {}) // the compilation finished.
-     .on('error', () => {}) // there was an error

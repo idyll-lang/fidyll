@@ -20,7 +20,7 @@ title:
 graphic: CustomComponent
 inline: False
 params:
-    spec: data/spec.pjson
+    spec: data/spec.json
     data: data/source.json
 
 

@@ -1,4 +1,6 @@
 [Header title:"fdsafdsa" text:"a" fullWidth:true /]
+[var name:"scene_0_spec" value:"data/spec.json" /]
+[var name:"scene_0_data" value:"data/source.json" /]
 
 Climate change, with its {x}  hotter summers and drier atmosphere, is poised to exacerbate the wildfires, insect outbreaks, and drought conditions that already threaten forests in the United States.
 
@@ -14,7 +16,7 @@ Better characterizing risks to forests can help us understand the role of forest
 
 [Scroller fullWidth:true]
   [Graphic]
-    [CustomComponent /]
+    [CustomComponent spec:scene_0_spec data:scene_0_data /]
   [/Graphic]
   [Step]
     [p]

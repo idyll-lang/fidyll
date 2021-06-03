@@ -5,6 +5,10 @@ class CustomComponent extends React.Component {
     const { hasError, idyll, updateProps, ...props } = this.props;
     return (
       <div {...props}>
+        State: {JSON.stringify(props.state)}
+
+        Spec: {props.spec}
+        Data: {props.data}
         <svg
           width={300}
           height={50}
