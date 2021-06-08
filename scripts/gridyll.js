@@ -12,7 +12,7 @@ const preprocess = (text) => {
 }
 
 const flexibleParseYaml = (text) => {
-    console.log('---------\nparsing yml\n---------\n', text, '\n\n');
+    // console.log('---------\nparsing yml\n---------\n', text, '\n\n');
     return yaml.load(text);
 }
 
@@ -37,7 +37,7 @@ let currentContent = null;
 let currentScene = null;
 
 content.split('\n').forEach((line) => {
-    console.log(currentState, line);
+    // console.log(currentState, line);
     switch(currentState) {
         case states.PRE_SCENE:
             if (line.trim().match(/\s*{scene}/g)) { // starting the first scene
@@ -142,37 +142,50 @@ if (currentContent) {
     }
 }
 
-console.log('parsedContent', JSON.stringify(parsedContent, null, 2));
+// console.log('parsedContent', JSON.stringify(parsedContent, null, 2));
 
 
 const serializeIdyll = require('./serialize-idyll');
 const Idyll = require('idyll');
 
-const targets = [{
-    name: 'scroller',
-    output: 'scroller'
-}, {
-    name: 'stepper',
-    output: 'slides'
-}];
+const targets = header.targets;
 
+// const targets = [{
+// //     name: 'scroller',
+// //     output: 'scroller'
+// // }, {
+//     name: 'slideshow',
+//     output: 'slides'
+// }];
+
+console.log(header, targets)
 targets.forEach((target, i) => {
-    const outputText = serializeIdyll(target.name, header, parsedContent);
-    console.log(outputText)
+    // console.log(target)
+    const { targets, ...idyllHeader } = header;
+    const outputText = serializeIdyll(target, idyllHeader, parsedContent);
 
-    const idyllPath = path.join(__dirname, '..', 'output', target.output, 'index.idyll') 
+    const idyllPath = path.join(__dirname, '..', 'output', target, 'index.idyll');
+    const idyllOutputPath = path.join(__dirname, '..', 'output', target, 'build');
+    
+    console.log("idyll path", idyllPath)
+    console.log("text output path", idyllPath)
+    console.log("output path", idyllOutputPath)
+
     fs.writeFileSync(idyllPath, outputText);
-
     // if (i === 0) {
         const idyll = Idyll({
             inputFile: idyllPath,
+            output: idyllOutputPath,
             watch: true,
+            css: path.join(path.dirname(idyllPath), 'styles.css'),
             port: 3000 + i
           });
           
           idyll.build({ live: true })
                .on('update', () => {}) // the compilation finished.
-               .on('error', () => {}) // there was an error
+               .on('error', (e) => {
+                   console.warn(e)
+               }) // there was an error
     // }
 })
 

@@ -1,6 +1,12 @@
 ---
 title: fdsafdsa
 text:a
+background:"#ffffff"
+color:"#333333"
+targets: 
+    - static
+    - scroller
+    - slideshow
 ---
 
 Climate change, with its {x}  hotter summers and drier atmosphere, is poised to exacerbate the wildfires, insect outbreaks, and drought conditions that already threaten forests in the United States.
@@ -19,7 +25,7 @@ Better characterizing risks to forests can help us understand the role of forest
 title: 
 graphic: CustomComponent
 inline: False
-params:
+parameters:
     spec: data/spec.json
     data: data/source.json
 
@@ -28,9 +34,9 @@ This is the scene foreward.
 
 
 {stage}
-params:
-    x: 
-    y: 
+parameters:
+    x: 0
+    y: 1
 controls:
     x:
         parameters:
@@ -46,9 +52,7 @@ This is the first stage text.
 
 {stage}
 parameters:
-    x:
-        value:5
-        transition:y
+    x:5
 controls:
 
 
@@ -57,7 +61,7 @@ This is the second stage text.
 
 
 {scene}
-graphic: CustomComponent
+graphic: CustomD3Component
 parameters:
     a: 5
     b: 10

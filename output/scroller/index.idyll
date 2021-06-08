@@ -1,6 +1,14 @@
-[Header title:"fdsafdsa" text:"a" fullWidth:true /]
+[Header
+  title:"fdsafdsa"
+  text:"a"
+  background:"#ffffff"
+  color:"#333333"
+  fullWidth:true /]
 [var name:"scene_0_spec" value:"data/spec.json" /]
 [var name:"scene_0_data" value:"data/source.json" /]
+[var name:"scene_1_a" value:5 /]
+[var name:"scene_1_b" value:10 /]
+[var name:"scene_1_d" value:11 /]
 
 Climate change, with its {x}  hotter summers and drier atmosphere, is poised to exacerbate the wildfires, insect outbreaks, and drought conditions that already threaten forests in the United States.
 
@@ -24,12 +32,12 @@ Better characterizing risks to forests can help us understand the role of forest
     [/p]
   [/Step]
   [Step]
-    [p]
+    [p onEnterViewFully:`scene_0_x = 0;scene_0_y = 1`]
       This is the first stage text.
     [/p]
   [/Step]
   [Step]
-    [p]
+    [p onEnterViewFully:`scene_0_x = 5`]
       This is the second stage text.
     [/p]
   [/Step]
@@ -37,7 +45,7 @@ Better characterizing risks to forests can help us understand the role of forest
 
 [Scroller fullWidth:true]
   [Graphic]
-    [CustomComponent /]
+    [CustomD3Component a:scene_1_a b:scene_1_b d:scene_1_d /]
   [/Graphic]
   [Step]
     [p]
@@ -45,7 +53,7 @@ Better characterizing risks to forests can help us understand the role of forest
     [/p]
   [/Step]
   [Step]
-    [p]
+    [p onEnterViewFully:`scene_1_x = 10`]
       And it has one stage.
     [/p]
   [/Step]

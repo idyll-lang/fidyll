@@ -2,6 +2,14 @@ const React = require('react');
 const { filterChildren, mapChildren } = require('idyll-component-children');
 
 class CustomComponent extends React.Component {
+  getSlides() {
+    return (
+      filterChildren(this.props.children || [], c => {
+        return c.type.name && c.type.name.toLowerCase() === 'slide';
+      }) || []
+    );
+  }
+
   componentDidMount() {
     const { currentSlide, tag, children } = this.props;
     const slides = filterChildren(children, c => {
@@ -53,18 +61,25 @@ class CustomComponent extends React.Component {
       ...props
     } = this.props;
     return (
-      <div
-        className="slideshow"
-        style={{
-          height: '100vh',
-          background: '#fff',
-          color: '#222',
-          position: 'absolute',
-          transform: `translateX(${-100 * currentSlide}vw)`,
-          transition: noTransition ? 'transform 0s' : null
-        }}
-      >
-        {children}
+      <div>
+        <div className="idyll-slide-graphic">
+          {filterChildren(children, c => {
+            return c.type.name && c.type.name.toLowerCase() === 'graphic';
+          })}
+        </div>
+        <div
+          className="slideshow"
+          style={{
+            height: '100vh',
+            background: '#fff',
+            color: '#222',
+            position: 'absolute',
+            transform: `translateX(${-100 * currentSlide}vw)`,
+            transition: noTransition ? 'transform 0s' : null
+          }}
+        >
+          {this.getSlides()}
+        </div>
       </div>
     );
   }

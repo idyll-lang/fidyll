@@ -1,6 +1,9 @@
-[Header title:"fdsafdsa" text:"a" fullWidth:true /]
-[var name:"scene_0_spec" value:"data/spec.json" /]
-[var name:"scene_0_data" value:"data/source.json" /]
+[Header
+  title:"fdsafdsa"
+  text:"a"
+  background:"#ffffff"
+  color:"#333333"
+  fullWidth:true /]
 
 Climate change, with its {x}  hotter summers and drier atmosphere, is poised to exacerbate the wildfires, insect outbreaks, and drought conditions that already threaten forests in the United States.
 
@@ -14,39 +17,24 @@ rising tree mortality risks can severely limit forests' ability to sequester car
 
 Better characterizing risks to forests can help us understand the role of forests in climate change mitigation and target key areas for adaptation and conservation. In this article and the accompanying map tool we summarize the results of a collaborative study in which we used statistical models to predict increases in climate-sensitive risks throughout the 21st century. Our results highlight how the resilience of US forest carbon management depends critically on global greenhouse gas emission scenarios. Reducing global emissions lowers risks, whereas higher emissions make forest carbon storage highly uncertain — especially in regions like the western US.
 
-[Stepper fullWidth:true]
-  [Graphic]
-    [CustomComponent spec:scene_0_spec data:scene_0_data /]
-  [/Graphic]
-  [Step]
-    [p]
-      This is the scene foreward.
-    [/p]
-  [/Step]
-  [Step]
-    [p]
-      This is the first stage text.
-    [/p]
-  [/Step]
-  [Step]
-    [p]
-      This is the second stage text.
-    [/p]
-  [/Step]
-[/Stepper]
+This is the scene foreward.
 
-[Stepper fullWidth:true]
-  [Graphic]
-    [CustomComponent /]
-  [/Graphic]
-  [Step]
-    [p]
-      This is the next scene.
-    [/p]
-  [/Step]
-  [Step]
-    [p]
-      And it has one stage.
-    [/p]
-  [/Step]
-[/Stepper]
+This is the first stage text.
+
+[Graphic]
+  [CustomComponent x:0 y:1 /]
+[/Graphic]
+
+This is the second stage text.
+
+[Graphic]
+  [CustomComponent x:5 /]
+[/Graphic]
+
+This is the next scene.
+
+And it has one stage.
+
+[Graphic]
+  [CustomD3Component x:10 /]
+[/Graphic]
