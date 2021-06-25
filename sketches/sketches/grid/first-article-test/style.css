@@ -1,0 +1,17 @@
+
+
+.article-container {
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: [article] minmax(min(100%, 600px), 600px) [aside] 300px;
+}
+
+article {
+  grid-column: article;
+  background: #009900;
+}
+
+aside {
+  grid-column: aside;
+  background: orange;
+}

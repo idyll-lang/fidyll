@@ -42,7 +42,6 @@ Better characterizing risks to forests can help us understand the role of forest
     [/p]
   [/Step]
 [/Scroller]
-
 [Scroller fullWidth:true]
   [Graphic]
     [CustomD3Component a:scene_1_a b:scene_1_b d:scene_1_d /]

@@ -4,7 +4,7 @@ const path = require('path');
 const archieml = require('archieml');
 const matter = require('gray-matter');
 const yaml = require('js-yaml');
-
+const { exec } = require('child_process');
 
 const preprocess = (text) => {
     text = text.replace(/\:([^\s\n])/g, ': $1')
@@ -54,15 +54,15 @@ content.split('\n').forEach((line) => {
                         text: ''
                     }
                 }
-                currentContent.text += '\n' + line 
+                currentContent.text += '\n' + line
             }
             break;
-        case states.SCENE_YML: 
+        case states.SCENE_YML:
             if (!line.trim() || line.trim() === '{}') { // empty line, the yaml is over
 
                 if (!currentContent) {
                     throw new Error('Scene declared with no information.');
-                }                
+                }
 
                 try {
                     currentContent.parsed = flexibleParseYaml(currentContent.raw);
@@ -97,7 +97,7 @@ content.split('\n').forEach((line) => {
             if (!line.trim() || line.trim() === '{}') { // empty line, the yaml is over
                 if (!currentContent) {
                     throw new Error('Stage declared with no information.');
-                }                
+                }
 
                 try {
                     currentContent.parsed = flexibleParseYaml(currentContent.raw);
@@ -166,27 +166,33 @@ targets.forEach((target, i) => {
 
     const idyllPath = path.join(__dirname, '..', 'output', target, 'index.idyll');
     const idyllOutputPath = path.join(__dirname, '..', 'output', target, 'build');
-    
+
     console.log("idyll path", idyllPath)
     console.log("text output path", idyllPath)
     console.log("output path", idyllOutputPath)
 
     fs.writeFileSync(idyllPath, outputText);
+
+    console.log('executing', `cd ${path.join(__dirname, '..', 'output', target)} && idyll --port ${3000 + i}`)
+
+    exec(`cd ${path.join(__dirname, '..', 'output', target)} && idyll --port ${3000 + i}`, function(err, stdout, stderr){
+        console.log(stdout);
+        console.log(stderr);
+    });
     // if (i === 0) {
-        const idyll = Idyll({
-            inputFile: idyllPath,
-            output: idyllOutputPath,
-            watch: true,
-            css: path.join(path.dirname(idyllPath), 'styles.css'),
-            port: 3000 + i
-          });
-          
-          idyll.build({ live: true })
-               .on('update', () => {}) // the compilation finished.
-               .on('error', (e) => {
-                   console.warn(e)
-               }) // there was an error
-    // }
+    // const idyll = Idyll({
+    //     inputFile: idyllPath,
+    //     output: idyllOutputPath,
+    //     watch: true,
+    //     css: path.join(path.dirname(idyllPath), 'styles.css'),
+    //     port: 3000 + i
+    //     });
+
+    // idyll.build({ live: true })
+    //     .on('update', () => {}) // the compilation finished.
+    //     .on('error', (e) => {
+    //         console.warn(e)
+    //     }) // there was an error
 })
 
 
