@@ -1,0 +1,49 @@
+---
+title: Quantifying Political Ideology
+targets:
+    - static
+    - scroller
+---
+
+
+
+Introduce the problem
+
+
+{scene}
+title: 
+graphic: CustomComponent
+
+Explain DW-Nominate in detail
+
+
+{stage}
+parameters:
+
+What is DW-Nominate
+
+{stage}
+parameters:
+
+Example with Congress
+What the two dimensions are
+
+{scene}
+title: 
+graphic: CustomComponent
+parameters:
+
+{stage}
+parameters:
+
+Explainer of nominate
+
+{stage}
+parameters:
+
+
+Explainer of DW
+Caveats
+See page 5-6 of ideology and congress
+Point to other resources    
+Martin-Quinn Scores

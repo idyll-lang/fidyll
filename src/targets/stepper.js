@@ -173,5 +173,5 @@ module.exports = (header, content) => {
   };
 
   // console.log(JSON.stringify(ast, null, 2));
-  return AST.toMarkup(ast, { insertFullWidth: true });
+  return ast;
 }

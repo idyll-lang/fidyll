@@ -1,0 +1,41 @@
+
+
+html {
+    font-size: 16px;
+}
+
+.idyll-root {
+    display: grid;
+    grid-template-columns:  1fr 20rem 20rem 1fr;
+}
+
+.idyll-root > div:not(.article-header):not(.idyll-text-container) {
+    grid-column: 1 / 5;
+    margin: 0 auto;
+    background-color: #efefef;
+    width: 100%;
+}
+
+.idyll-root::before {
+    display: none;
+    content: none;
+}
+
+.article-header {
+    grid-column: 1 / 5;
+}
+
+.idyll-text-container {
+    grid-column: 2 / 4;
+}
+
+
+@media (max-width: 40rem) {
+     .idyll-root {
+        grid-template-columns:  auto 15rem 15rem auto;
+    }   
+
+    html {
+        font-size: 10px;
+    }
+}

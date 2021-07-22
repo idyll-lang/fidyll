@@ -2,18 +2,25 @@
   "name": "gridyll",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
+  "bin": {
+    "gridyll": "./bin/gridyll.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/text-to-speech": "^3.2.5",
     "archieml": "^0.4.2",
+    "fs-extra": "^10.0.0",
     "gray-matter": "^4.0.3",
     "idyll": "^5.5.3",
     "idyll-ast": "^2.2.6",
     "idyll-d3-component": "^2.1.0",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "puppeteer": "^10.0.0",
+    "puppeteer-screen-recorder": "^1.1.11"
   }
 }

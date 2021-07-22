@@ -4,7 +4,10 @@ const path = require('path');
 const archieml = require('archieml');
 const matter = require('gray-matter');
 const yaml = require('js-yaml');
+const Idyll = require('idyll');
 const { exec } = require('child_process');
+
+const serializeIdyll = require('./serialize-idyll');
 
 const preprocess = (text) => {
     text = text.replace(/\:([^\s\n])/g, ': $1')
@@ -16,7 +19,16 @@ const flexibleParseYaml = (text) => {
     return yaml.load(text);
 }
 
-let text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'basic-test.aml'), 'utf-8');
+const _args = process.argv.slice(2);
+
+let text;
+
+if (_args.length) {
+    text = fs.readFileSync(_args[0], 'utf-8');
+} else {
+    text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'basic-test.aml'), 'utf-8');
+}
+
 
 text = preprocess(text);
 
@@ -145,8 +157,6 @@ if (currentContent) {
 // console.log('parsedContent', JSON.stringify(parsedContent, null, 2));
 
 
-const serializeIdyll = require('./serialize-idyll');
-const Idyll = require('idyll');
 
 const targets = header.targets;
 
@@ -157,6 +167,8 @@ const targets = header.targets;
 //     name: 'slideshow',
 //     output: 'slides'
 // }];
+
+let videoPort = 3000;
 
 console.log(header, targets)
 targets.forEach((target, i) => {
@@ -172,6 +184,10 @@ targets.forEach((target, i) => {
     console.log("output path", idyllOutputPath)
 
     fs.writeFileSync(idyllPath, outputText);
+
+    if (target === 'video') {
+        videoPort = 3000 + i;
+    }
 
     console.log('executing', `cd ${path.join(__dirname, '..', 'output', target)} && idyll --port ${3000 + i}`)
 
@@ -196,7 +212,44 @@ targets.forEach((target, i) => {
 })
 
 
+console.log(targets);
 
+if (targets.includes('video')) {
 
+    setTimeout(() => {
+        console.log('Recording video');
+        const puppeteer = require('puppeteer');
+        const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+    
+        console.log('recording 1');
+        (async () => {
+            console.log('recording 2');
+            const browser = await puppeteer.launch();
+            console.log('recording 3');
+            const page = await browser.newPage();
+            console.log('recording 4');
+            const recorder = new PuppeteerScreenRecorder(page, {
+                ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
+                videoFrame: {
+                    width: 1280,
+                    height: 720,
+                },
+                aspectRatio: '16:9',
+            });
+            console.log('recording 5');
+            await recorder.start(path.join(__dirname, '..', 'video.mp4')); // video must have .mp4 has an extension.
+            console.log('recording 6');
+            await page.goto(`http://localhost:${videoPort}`);
+            console.log('recording 7');
+            await page.waitForTimeout(3000);
+            console.log('recording 8');
+            await recorder.stop();
+            console.log('recording 9');
+            await browser.close();
+            console.log('recording 10');
+        })();
+
+    }, 5000)
+}
 
 

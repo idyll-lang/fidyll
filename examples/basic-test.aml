@@ -4,9 +4,7 @@ text:a
 background:"#ffffff"
 color:"#333333"
 targets: 
-    - static
-    - scroller
-    - slideshow
+    - video
 ---
 
 Climate change, with its {x}  hotter summers and drier atmosphere, is poised to exacerbate the wildfires, insect outbreaks, and drought conditions that already threaten forests in the United States.

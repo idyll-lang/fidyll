@@ -1,0 +1,41 @@
+[var name:"__slideshowIndex" value:0 /]
+[var name:"__slideshowLength" value:0 /]
+[VideoStepper
+  index:__slideshowIndex
+  length:__slideshowLength
+  fullWidth:true /]
+[Slideshow
+  fullWidth:true
+  currentSlide:__slideshowIndex
+  numSlides:__slideshowLength]
+  [Graphic]
+    [Conditional if:`__slideshowIndex >= 1 && __slideshowIndex < 3`]
+      [CustomComponent spec:scene_0_spec data:scene_0_data /]
+    [/Conditional]
+    [Conditional if:`__slideshowIndex >= 3 && __slideshowIndex < 4`]
+      [CustomD3Component a:scene_1_a b:scene_1_b d:scene_1_d /]
+    [/Conditional]
+  [/Graphic]
+  [Slide]
+    [Header
+      title:"fdsafdsa"
+      text:"a"
+      background:"#ffffff"
+      color:"#333333" /]
+  [/Slide]
+  [Slide]
+    [p]
+      This is the first stage text.
+    [/p]
+  [/Slide]
+  [Slide]
+    [p]
+      This is the second stage text.
+    [/p]
+  [/Slide]
+  [Slide]
+    [p]
+      And it has one stage.
+    [/p]
+  [/Slide]
+[/Slideshow]

@@ -1,0 +1,44 @@
+[Header title:"Quantifying Political Ideology" fullWidth:true /]
+
+Introduce the problem
+
+[Scroller fullWidth:true]
+  [Graphic]
+    [CustomComponent /]
+  [/Graphic]
+  [Step]
+    [p]
+      Explain DW-Nominate in detail
+    [/p]
+  [/Step]
+  [Step]
+    [p onEnterViewFully:``]
+      What is DW-Nominate
+    [/p]
+  [/Step]
+  [Step]
+    [p onEnterViewFully:``]
+      Example with Congress
+What the two dimensions are
+    [/p]
+  [/Step]
+[/Scroller]
+[Scroller fullWidth:true]
+  [Graphic]
+    [CustomComponent /]
+  [/Graphic]
+  [Step]
+    [p onEnterViewFully:``]
+      Explainer of nominate
+    [/p]
+  [/Step]
+  [Step]
+    [p onEnterViewFully:``]
+      Explainer of DW
+Caveats
+See page 5-6 of ideology and congress
+Point to other resources    
+Martin-Quinn Scores
+    [/p]
+  [/Step]
+[/Scroller]
