@@ -17,14 +17,13 @@
 // Boilerplate
 const fs = require('fs-extra');
 const path = require('path');
-
-const util = require('util');
-const textToSpeech = require('@google-cloud/text-to-speech');
+const editly = require('editly');
 
 const { exec, spawn } = require('child_process');
 
 const parseGridyllInput = require('./parse/parse-aml');
 const serializeIdyll = require('./serialize-idyll');
+const getVideoAudioData = require('./get-video-audio-data');
 
 // Class implementation
 
@@ -43,7 +42,7 @@ class Gridyll {
         const { content, header } = this.parseInput();
 
         // 2. Determine the output targets
-        const targets = header.targets;
+        const { targets, ...idyllHeader } = header;
 
         console.log('Ensuring that output target boilerplate exists...');
         this.ensureTargetsExist(targets);
@@ -52,10 +51,7 @@ class Gridyll {
 
         // 3. For each target
         targets.forEach((target, i) => {
-            const { targets, ...idyllHeader } = header;
-
             console.log(`Serializing markup for target ${target}`);
-
 
             //    3.1. Serialize Idyll markup
             const outputText = serializeIdyll(target, idyllHeader, content);
@@ -125,53 +121,82 @@ class Gridyll {
             _idyll.stderr.on('data', (data) => {
                 console.log(data.toString());
             })
-            _idyll.stdout.on('data', (data) => {
+            _idyll.stdout.on('data', async (data) => {
                 if (target === 'video' && data.includes('Serving files from:')) {
-                    console.log('\n🎬 Recording video...');
+                    console.log('\n\t🎙️ Recording audio...');
+                    const audioData = await getVideoAudioData(header, content);
+
+                    const slideTiming = audioData.map(d => d.duration).join(',');
+
+                    console.log('\t🎥 Recording video...');
                     const puppeteer = require('puppeteer');
                     const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+
+
+                    /**
+                     * Need to do three things:
+                     * 
+                     *  1. Record the video
+                     *      a. Need to make sure its the proper duration
+                     *  2. Record the audio tracks
+                     *      a. Need to have an array of text to record
+                     *  3. Stich the audio tracks and video together. 
+                     *      a. The audio tracks need to come in at the right position
+                     *      b. The video also needs to cut at the right timing. This means that the 
+                     *          duration of each audio track needs to be known ahead of time. So the
+                     *          audio step needs to be done first, then the metadata (track length)
+                     *          needs to be passed into the pupeteer recording. 
+                     */
+                    
                 
-                    (async () => {
-                        const browser = await puppeteer.launch({
-                            defaultViewport: { width: 1280 * 2, height: 720 * 2 }
-                        });
-                        const page = await browser.newPage();
-                        const recorder = new PuppeteerScreenRecorder(page, {
-                            ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
-                            videoFrame: {
-                                width: 1280 * 2,
-                                height: 720 * 2,
-                            },
-                            aspectRatio: '16:9',
-                        });
-                        console.log('video port', videoPort)
-                        await recorder.start('video.mp4'); // video must have .mp4 has an extension.
-                        await page.goto(`http://localhost:${videoPort}`);
-                        await page.waitForTimeout(12000);
-                        await recorder.stop();
-                        await browser.close();
-                        console.log('🎬 Recording complete.\n');
-                        
-                        const client = new textToSpeech.TextToSpeechClient();
-                        const text = 'hello, world!';
+                    const browser = await puppeteer.launch({
+                        defaultViewport: { width: 1280 * 2, height: 720 * 2 }
+                    });
+                    const page = await browser.newPage();
+                    const recorder = new PuppeteerScreenRecorder(page, {
+                        ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
+                        videoFrame: {
+                            width: 1280 * 2,
+                            height: 720 * 2,
+                        },
+                        aspectRatio: '16:9',
+                    });
+                    await recorder.start('video.mp4'); // video must have .mp4 has an extension.
+                    await page.goto(`http://localhost:${videoPort}?slideTiming=${slideTiming}`);
+                    await page.waitForTimeout(12000);
+                    await recorder.stop();
+                    await browser.close();
+                    console.log('\t🎥 Recording complete.');
 
-                        // Construct the request
-                        const request = {
-                            input: {text: text},
-                            // Select the language and SSML voice gender (optional)
-                            voice: {languageCode: 'en-US', ssmlGender: 'NEUTRAL'},
-                            // select the type of audio encoding
-                            audioConfig: {audioEncoding: 'MP3'},
-                        };
+                    console.log('\t🎬 Compositing video.');
 
-                        // Performs the text-to-speech request
-                        const [response] = await client.synthesizeSpeech(request);
-                        // Write the binary audio content to a local file
-                        const writeFile = util.promisify(fs.writeFile);
-                        await writeFile('output.mp3', response.audioContent, 'binary');
-                        console.log('Audio content written to file: output.mp3');
+                    let audioOffset = 0;
 
-                    })();               
+                    await editly({
+                        // enableFfmpegLog: true,
+                        outPath: 'video2.mp4',
+                        width: 1280 * 2, 
+                        height: 720 * 2,
+                        // defaults: {
+                        //     layer: { fontPath: './assets/Patua_One/PatuaOne-Regular.ttf' },
+                        // },
+                        clips: [
+                            { layers: [{ type: 'video', path: 'video.mp4' }] }
+                        ],
+                        audioNorm: { enable: true, gaussSize: 3, maxGain: 100 },
+                        clipsAudioVolume: 50,
+                        audioTracks: audioData.map(({ filename, duration }) => {
+                            let ret = {
+                                path: filename,
+                                start: audioOffset
+                            }
+
+                            audioOffset += duration / 1000;
+                            return ret;
+                        })
+                    }).catch(console.error);
+
+                    console.log('\t🎬 Compositing complete.\n');
                 }
             });
 
