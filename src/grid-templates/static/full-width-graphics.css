@@ -16,6 +16,12 @@ html {
     width: 100%;
 }
 
+ .article-header {
+    margin: 0 auto;
+    margin-bottom: 60px;
+    text-align: center;
+  }
+
 .idyll-root::before {
     display: none;
     content: none;
@@ -33,7 +39,7 @@ html {
 @media (max-width: 40rem) {
      .idyll-root {
         grid-template-columns:  auto 15rem 15rem auto;
-    }   
+    }
 
     html {
         font-size: 10px;

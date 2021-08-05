@@ -5,7 +5,7 @@ const parseInline = require('../parse/parse-inline');
 module.exports = (header, content) => {
 
   let id = 0;
-  
+
 
   const paramToVar = (param, idx) => {
     return `scene_${idx}_${param}`;
@@ -14,11 +14,11 @@ module.exports = (header, content) => {
   let sceneIdxVars = 0;
   let sceneIdxContent = 0;
   let currentScene = null;
- 
-  
+
+
   const { data, ...headerProps } = header;
   console.log('header', header);
-  
+
   const ast = {
     id: id++,
     type: 'component',
@@ -110,7 +110,7 @@ module.exports = (header, content) => {
               }
             }))
           }
-        case 'scene': 
+        case 'scene':
           sceneIdxContent++;
           currentScene = contentFragment.parsed;
           return {
@@ -134,7 +134,7 @@ module.exports = (header, content) => {
                       memo[param] = {
                         type: 'variable',
                         value: paramToVar(param, sceneIdxContent-1)
-                      } 
+                      }
                       return memo;
                     }, {
                       data: {
@@ -156,6 +156,8 @@ module.exports = (header, content) => {
                     children: Object.keys(contentFragment.parsed.controls || {}).map(k => {
                       const { freeform, range, set } = contentFragment.parsed.controls[k];
 
+                      let _control;
+
                       if (range) {
                         if (range.length < 2) {
                           console.error('Error: range provided with fewer than 2 parameters. Please provide a range like [min, max], or [min, max, step].');
@@ -164,7 +166,7 @@ module.exports = (header, content) => {
                           console.warn('Warning: range provided without set parameter');
                         }
 
-                        return {
+                        _control = {
                           id: id++,
                           type: 'component',
                           name: 'Range',
@@ -191,7 +193,7 @@ module.exports = (header, content) => {
                       else if (set) {
                         let _set = new Set(set)
                         if (_set.has(true) && _set.has(false) && _set.size === 2) {
-                          return {
+                          _control = {
                             id: id++,
                             type: 'component',
                             name: 'Boolean',
@@ -201,26 +203,27 @@ module.exports = (header, content) => {
                                 value: paramToVar(k, sceneIdxContent-1)
                               }
                             }
-                          }  
-                        }
-                        return {
-                          id: id++,
-                          type: 'component',
-                          name: 'Select',
-                          properties: {
-                            value: {
-                              type: 'variable',
-                              value: paramToVar(k, sceneIdxContent-1)
-                            },
-                            options: {
-                              type: 'expression',
-                              value: `[${set}]`
+                          }
+                        } else {
+                          _control = {
+                            id: id++,
+                            type: 'component',
+                            name: 'Select',
+                            properties: {
+                              value: {
+                                type: 'variable',
+                                value: paramToVar(k, sceneIdxContent-1)
+                              },
+                              options: {
+                                type: 'expression',
+                                value: JSON.stringify([...set.values()].map(v => { return { label: v, value: v} }))
+                              }
                             }
                           }
                         }
                       }
                       else if (freeform) {
-                        return {
+                        _control = {
                           id: id++,
                           type: 'component',
                           name: 'TextInput',
@@ -234,7 +237,7 @@ module.exports = (header, content) => {
                       }
                       else {
                         console.warn(`Could not identify control type for parameter ${k}`);
-                        return {
+                        _control = {
                           id: id++,
                           type: 'component',
                           name: 'TextInput',
@@ -245,6 +248,19 @@ module.exports = (header, content) => {
                             }
                           }
                         }
+                      }
+                      return {
+                        id: id++,
+                        type: 'component',
+                        name: 'div',
+                        children: [
+                          {
+                            id: id++,
+                            type: 'textnode',
+                            value: k.replace(/_/g, ''),
+                          },
+                          _control
+                        ]
                       }
                     })
                   }

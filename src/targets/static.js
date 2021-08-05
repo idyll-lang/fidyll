@@ -25,7 +25,7 @@ const cartesian = (a) => {
 
 module.exports = (header, content) => {
 
-  
+
   let id = 0;
 
   const paramToVar = (param, idx) => {
@@ -37,19 +37,19 @@ module.exports = (header, content) => {
   const { data, ...headerProps } = header;
 
   const appendices = content.map((contentFragment, i) => {
-    switch (contentFragment.type) {        
-      case 'scene': 
+    switch (contentFragment.type) {
+      case 'scene':
         const sceneProps = Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
           memo[param] = {
             type: 'value',
             value: contentFragment.parsed.parameters[param]
-          } 
+          }
           return memo;
         }, {
           data: {
             type: 'expression',
             value: `{ ${Object.keys(header.data).map(k => { return `${k}:${k}` }).join(', ')} }`
-          }  
+          }
         })
       //   const xprod = cartesian(Object.keys(contentFragment.parsed.controls || {}).map(k => {
       //     const { range, set } = contentFragment.parsed.controls[k];
@@ -61,7 +61,7 @@ module.exports = (header, content) => {
       //       values = set;
       //     } else {
       //       return false;
-      //     }              
+      //     }
 
       //     return values
       //   }).filter(d => d))
@@ -76,21 +76,21 @@ module.exports = (header, content) => {
       //     values = set;
       //   } else {
       //     return false;
-      //   }              
+      //   }
 
       //   return values
       // }).filter(d => d))
       // console.log('output', xprod);
-      
+
       const controlNames = Object.keys(contentFragment.parsed.controls || {}).map(k => {
         const { range, set } = contentFragment.parsed.controls[k];
         if (!range && !set) {
           return false;
-        }              
-        
+        }
+
         return k;
       }).filter(d => d);
-      
+
       // const appendix = {};
       const appendix = {
         id: id++,
@@ -109,7 +109,7 @@ module.exports = (header, content) => {
                 children: [{
                   id: id++,
                   type: 'textnode',
-                  value: `Appendix Scene ${i+1}`  
+                  value: `Appendix Scene ${i+1}`
                 }]
               }, {
                 id: id++,
@@ -133,8 +133,8 @@ module.exports = (header, content) => {
                     //   {
                     //   id: id++,
                     //   type: 'textnode',
-                    //   value: `Appendix Scene ${i+1} ${k}`  
-                    // }, 
+                    //   value: `Appendix Scene ${i+1} ${k}`
+                    // },
                     {
                       id: id++,
                       type: 'component',
@@ -148,7 +148,7 @@ module.exports = (header, content) => {
                           type: 'expression',
                           value: `{
                             display: 'grid',
-                            gridTemplateColumns: '${_range(0, Math.min(6, Object.keys(contentFragment.parsed.controls || {}).map(k => {
+                            gridTemplateColumns: '${_range(0, Math.min(4, Object.keys(contentFragment.parsed.controls || {}).map(k => {
                               const { range, set } = contentFragment.parsed.controls[k];
                               let values;
                               if (range) {
@@ -157,7 +157,7 @@ module.exports = (header, content) => {
                                 values = set;
                               } else {
                                 return false;
-                              }              
+                              }
                               return values
                             }).filter(d => d).reduce((memo, v) => memo * v.length, 1)) - 1).map(v => '1fr').join(' ')}'
                           }`
@@ -165,7 +165,7 @@ module.exports = (header, content) => {
                       },
                       children: cartesian(Object.keys(contentFragment.parsed.controls || {}).map(k => {
                           const { range, set } = contentFragment.parsed.controls[k];
-        
+
                           let values;
                           if (range) {
                             values = _range(range[0], range[1], range[2]);
@@ -173,8 +173,8 @@ module.exports = (header, content) => {
                             values = set;
                           } else {
                             return false;
-                          }              
-        
+                          }
+
                           return values
                         }).filter(d => d)).reduce((memo, params) => {
                           memo.push({
@@ -199,7 +199,7 @@ module.exports = (header, content) => {
                               type: 'component',
                               name: contentFragment.parsed.graphic,
                               properties: {
-                                ...sceneProps, 
+                                ...sceneProps,
                                 ...Object.fromEntries(params.map((param, idx) => {
                                   return [controlNames[idx], {
                                     type: 'value',
@@ -260,7 +260,20 @@ module.exports = (header, content) => {
               value: headerProps[key]
           }
           return memo;
-        }, {})
+        }, {
+          color: {
+            type: 'value',
+            value: '#333'
+          },
+          background: {
+            type: 'value',
+            value: '#fff'
+          },
+          fullWidth: {
+            type: 'value',
+            value: false
+          }
+        })
       }
     ].concat(header.data ? Object.keys(header.data).map(k => {
       const source = header.data[k];
@@ -308,7 +321,7 @@ module.exports = (header, content) => {
               }
             }))
           }
-        case 'scene': 
+        case 'scene':
           sceneIdxContent++;
           return {
             id: id++,
@@ -328,6 +341,31 @@ module.exports = (header, content) => {
                   ]
                 }
               }) : []).concat(contentFragment.stages.reduce((arr, stage) => {
+                arr.push({
+                  id: id++,
+                  type: 'component',
+                  name: 'Graphic',
+                  children: [
+                    {
+                      id: id++,
+                      type: 'component',
+                      name: contentFragment.parsed.graphic,
+                      properties: Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
+                        memo[param] = {
+                          type: 'value',
+                          value: stage.parsed.parameters[param]
+                        }
+                        return memo;
+                      }, {
+                        data: {
+                          type: 'expression',
+                          value: `{ ${Object.keys(header.data).map(k => { return `${k}:${k}` }).join(', ')} }`
+                        }
+                      })
+                    }
+                  ]
+                })
+
                 arr = arr.concat(
                   stage.text.trim().split(/\n\n+/).map(t => {
                     return {
@@ -344,30 +382,6 @@ module.exports = (header, content) => {
                     }
                   })
                 )
-                arr.push({
-                  id: id++,
-                  type: 'component',
-                  name: 'Graphic',
-                  children: [
-                    {
-                      id: id++,
-                      type: 'component',
-                      name: contentFragment.parsed.graphic,
-                      properties: Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
-                        memo[param] = {
-                          type: 'value',
-                          value: stage.parsed.parameters[param]
-                        } 
-                        return memo;
-                      }, {
-                        data: {
-                          type: 'expression',
-                          value: `{ ${Object.keys(header.data).map(k => { return `${k}:${k}` }).join(', ')} }`
-                        }  
-                      })
-                    }
-                  ]
-                })
                 return arr;
             }, []))
           }

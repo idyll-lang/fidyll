@@ -55,7 +55,7 @@ class Gridyll {
 
             //    3.1. Serialize Idyll markup
             const outputText = serializeIdyll(target, idyllHeader, content);
-            
+
             const idyllPath = path.join(this.projectPath, 'output', target, 'index.idyll');
             const idyllOutputPath = path.join(this.projectPath, 'output', target);
             const componentsOutputPath = path.join(this.projectPath, 'output', target, 'components');
@@ -63,8 +63,8 @@ class Gridyll {
             const dataInputPath = path.join(this.projectPath, 'data');
             const staticOutputPath = path.join(this.projectPath, 'output', target, 'static');
             const staticInputPath = path.join(this.projectPath, 'static');
-            
-            
+
+
             fs.writeFileSync(idyllPath, outputText);
             console.log(`Serialization complete.\n`)
 
@@ -74,16 +74,16 @@ class Gridyll {
 
             // console.log(`Executing for target ${target}`, `\n\tcd ${idyllOutputPath} && idyll --port ${3000 + i}`)
 
-            
+
             //    3.2. Determine grid structure
 
-            // TODO 
+            // TODO
             //      - Determine separately for each breakpoint
             //      - Determine separately for each section
             //          - maybe... associate constraints with each template?
             const stylesPath = path.join(this.projectPath, 'output', target, 'styles.css');
             const templateOptions = fs.readdirSync(path.join(__dirname, 'grid-templates', target)).filter(f => !['.ds_store'].includes(f.toLowerCase()));
-            
+
             let chosenTemplate;
             if (!templateOptions.length) {
                 console.warn(`Warning: No templates available for target ${target}... continuing without.`);
@@ -91,7 +91,7 @@ class Gridyll {
             else if (templateOptions.length === 1) {
                 chosenTemplate = templateOptions[0];
             } else {
-                console.warn(`Warning: Found multiple potential templates for target ${target}, but have no logic to decide... taking the first one.`);                
+                console.warn(`Warning: Found multiple potential templates for target ${target}, but have no logic to decide... taking the first one.`);
                 chosenTemplate = templateOptions[0];
             }
 
@@ -101,10 +101,10 @@ class Gridyll {
             //    3.3. Define grid placement for text, graphics, notes
 
 
-            //      TODO: 
+            //      TODO:
             //          1. For each breakpoint in the template:
             //              1.1. Place any elements for which there is no free dimension ()
-            //              1.2. Launch pupeteer with page 
+            //              1.2. Launch pupeteer with page
             //              1.3. F
 
 
@@ -135,26 +135,27 @@ class Gridyll {
 
                     /**
                      * Need to do three things:
-                     * 
+                     *
                      *  1. Record the video
                      *      a. Need to make sure its the proper duration
                      *  2. Record the audio tracks
                      *      a. Need to have an array of text to record
-                     *  3. Stich the audio tracks and video together. 
+                     *  3. Stich the audio tracks and video together.
                      *      a. The audio tracks need to come in at the right position
-                     *      b. The video also needs to cut at the right timing. This means that the 
+                     *      b. The video also needs to cut at the right timing. This means that the
                      *          duration of each audio track needs to be known ahead of time. So the
                      *          audio step needs to be done first, then the metadata (track length)
-                     *          needs to be passed into the pupeteer recording. 
+                     *          needs to be passed into the pupeteer recording.
                      */
-                    
-                
+
+
                     const browser = await puppeteer.launch({
                         defaultViewport: { width: 1280 * 2, height: 720 * 2 }
                     });
                     const page = await browser.newPage();
                     const recorder = new PuppeteerScreenRecorder(page, {
-                        ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
+                        // ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
+                        ffmpeg_Path: '/usr/local/bin/ffmpeg',
                         videoFrame: {
                             width: 1280 * 2,
                             height: 720 * 2,
@@ -175,7 +176,7 @@ class Gridyll {
                     await editly({
                         // enableFfmpegLog: true,
                         outPath: 'video2.mp4',
-                        width: 1280 * 2, 
+                        width: 1280 * 2,
                         height: 720 * 2,
                         // defaults: {
                         //     layer: { fontPath: './assets/Patua_One/PatuaOne-Regular.ttf' },
@@ -233,7 +234,7 @@ class Gridyll {
 
     }
 
-    
+
 
 }
 
