@@ -3,32 +3,38 @@
 html {
     font-size: 16px;
   }
-  
+
   .idyll-root, .idyll-scroll {
     display: grid;
     grid-template-columns:  1fr 20rem 20rem 1fr;
+    gap: 6px;
   }
-  
+
+  h1.hed {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
   .idyll-root > div:not(.article-header):not(.idyll-text-container) {
     grid-column: 1 / 5;
     margin: 0 auto;
     /* background-color: #efefef; */
     width: 100%;
   }
-  
+
   .idyll-root::before {
     display: none;
     content: none;
   }
-  
+
   .article-header {
     grid-column: 1 / 5;
   }
-  
+
   .idyll-text-container {
     grid-column: 2 / 4;
   }
-  
+
   .idyll-scroll {
     display: grid;
     grid-template-columns:  1fr 1fr 1fr 1fr;
@@ -47,12 +53,38 @@ html {
   .idyll-scroll  .idyll-scroll-graphic > div {
     width: auto !important;
   }
-  
+
+  .idyll-scroll-text .idyll-step {
+    border: solid 1px #ddd;
+    box-shadow: #ddd 2px 2px 3px;
+    border-radius: 5px;
+    padding: 20px 25px;
+    font-size: 20px;
+    line-height: 1.5;
+    font-weight: 300;
+    color: #333;
+  }
+
+  p {
+    font-size: 20px;
+    line-height: 1.5;
+    font-weight: 300;
+    margin-bottom: 2em;
+  }
+
+  .idyll-scroll-text .idyll-step p {
+    margin-bottom: 1em;
+  }
+
+  .idyll-scroll-text .idyll-step p:last-of-type {
+    margin-bottom: 0;
+  }
+
   @media (max-width: 40rem) {
      .idyll-root {
         grid-template-columns:  auto 15rem 15rem auto;
-    }   
-  
+    }
+
     html {
         font-size: 10px;
     }

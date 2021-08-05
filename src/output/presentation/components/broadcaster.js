@@ -3,7 +3,8 @@ const Peer = require('peerjs');
 
 class Broadcaster extends React.Component {
 
-  constructor() {
+  constructor(props) {
+    super(props);
     this.state = {
       isPresenting: false
     }
@@ -20,7 +21,7 @@ class Broadcaster extends React.Component {
         isPresenting: true
       })
 
-      this.peer = new Peer(this.props.peerkey); 
+      this.peer = new Peer(this.props.peerkey);
       this.peer.on('connection', (conn) => {
           this._conn = conn;
         conn.on('open', () => {
@@ -28,7 +29,7 @@ class Broadcaster extends React.Component {
         });
       });
     } else {
-      this.peer = new Peer();     
+      this.peer = new Peer();
       this.conn = this.peer.connect(this.props.peerkey);
 
       this.conn.on('data', (data) => {
@@ -62,7 +63,7 @@ class Broadcaster extends React.Component {
         <button onClick={() => this.handleSend}>
 
         </button>
-    
+
     </div>)
   }
 }
