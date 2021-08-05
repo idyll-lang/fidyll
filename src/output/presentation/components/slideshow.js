@@ -10,6 +10,12 @@ class CustomComponent extends React.Component {
     );
   }
 
+  getCurrentSlide() {
+    return this.getSlides().filter((slide, idx) => {
+      return idx === this.props.currentSlide
+    })
+  }
+
   componentDidMount() {
     const { currentSlide, tag, children } = this.props;
     const slides = filterChildren(children, c => {
@@ -50,6 +56,18 @@ class CustomComponent extends React.Component {
     };
   }
 
+  componentDidUpdate(oldProps) {
+    console.log('component did update');
+    if (oldProps.currentSlide !== this.props.currentSlide) {
+      let currentSlide = this.getCurrentSlide()[0];
+      let onEnter = currentSlide.props.onEnter || currentSlide.props.children[0].props.onEnter;
+      if (onEnter) {
+        console.log('the new slide has an enter state', onEnter);
+        onEnter();
+      }
+    }
+  }
+
   render() {
     const {
       hasError,
@@ -71,14 +89,14 @@ class CustomComponent extends React.Component {
           className="slideshow"
           style={{
             height: '100vh',
-            background: '#fff',
+            // background: '#fff',
             color: '#222',
             position: 'absolute',
-            transform: `translateX(${-100 * currentSlide}vw)`,
-            transition: noTransition ? 'transform 0s' : null
+            top: 0,
+            background: 'none'
           }}
         >
-          {this.getSlides()}
+          {this.getCurrentSlide()}
         </div>
       </div>
     );
