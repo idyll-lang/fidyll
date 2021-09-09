@@ -1,6 +1,8 @@
 
 const AST = require('idyll-ast');
 
+const summarize = require('../summarize-text');
+
 module.exports = (header, content) => {
 
 
@@ -13,10 +15,10 @@ module.exports = (header, content) => {
   let sceneIdxVars = 0;
   let sceneIdxVarsControls = 0;
   let sceneIdxContent = 0, sceneIdxContentControls = 0, sceneIdxContentSlides = 0;
- 
+
   let sceneStartIndex = 1, sceneEndIndex = -1;
   let sceneStartIndexControls = 1, sceneEndIndexControls = -1;
-  
+
   const { data, ...headerProps } = header;
 
 
@@ -98,7 +100,7 @@ module.exports = (header, content) => {
             value: 0
           }
         }
-      }, 
+      },
       {
         id: id++,
         type: 'component',
@@ -144,7 +146,7 @@ module.exports = (header, content) => {
                       memo[param] = {
                         type: 'variable',
                         value: paramToVar(param, sceneIdxContent-1)
-                      } 
+                      }
                       return memo;
                     }, {
                       data: {
@@ -194,7 +196,7 @@ module.exports = (header, content) => {
             case 'scene':
               sceneIdxContentSlides++
               currentScene = contentFragment
-              contentFragment.stages.forEach((stage, _stageIdx) => {
+              contentFragment.stages.forEach(async (stage, _stageIdx) => {
                 memo.push({
                   id: id++,
                   type: 'component',
@@ -208,6 +210,8 @@ module.exports = (header, content) => {
                     }
                   },
                   children: stage.text.trim().split(/\n\n+/).map(t => {
+                    // console.log('text', t);
+                    summarize(t);
                     return {
                       id: id++,
                       type: 'component',
@@ -226,9 +230,9 @@ module.exports = (header, content) => {
 
           }
           return memo;
-        
+
         }, []))
-      },       
+      },
       {
         id: id++,
         type: 'component',
@@ -241,6 +245,17 @@ module.exports = (header, content) => {
           length: {
             type: "variable",
             value: sceneEndIndex
+          }
+        }
+      },
+      {
+        id: id++,
+        type: 'component',
+        name: "SlideIndex",
+        properties: {
+          index: {
+            type: "variable",
+            value: "__slideshowIndex"
           }
         }
       }])

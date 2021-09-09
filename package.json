@@ -22,7 +22,9 @@
     "idyll-ast": "^2.2.6",
     "idyll-d3-component": "^2.1.0",
     "js-yaml": "^4.1.0",
+    "openai-api": "^1.2.5",
     "puppeteer": "^10.0.0",
+    "puppeteer-recorder": "^1.0.7",
     "puppeteer-screen-recorder": "^1.1.11"
   }
 }

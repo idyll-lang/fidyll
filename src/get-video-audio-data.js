@@ -17,7 +17,7 @@ function makeid(length) {
 
 
 module.exports = async (header, content) => {
-  // Return an array of 
+  // Return an array of
   // [{ text: , duration: }]
 
   let initialArray = [{ text: header.title }];
@@ -43,19 +43,21 @@ module.exports = async (header, content) => {
     return text !== ''
   });
 
+  console.log('voiceovers', voiceovers)
+
 
   const client = new textToSpeech.TextToSpeechClient();
   const audioData = await Promise.all(voiceovers.map(async ({ text }) => {
-  
+
     // Construct the request
     const request = {
         input: { text: text },
         // Select the language and SSML voice gender (optional)
-        voice: {languageCode: 'en-US', ssmlGender: 'NEUTRAL'},
+        voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
         // select the type of audio encoding
         audioConfig: { audioEncoding: 'MP3' },
     };
-  
+
     // Performs the text-to-speech request
     const [ response ] = await client.synthesizeSpeech(request);
 

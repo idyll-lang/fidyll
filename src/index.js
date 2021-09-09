@@ -126,12 +126,18 @@ class Gridyll {
                     console.log('\n\t🎙️ Recording audio...');
                     const audioData = await getVideoAudioData(header, content);
 
-                    const slideTiming = audioData.map(d => d.duration).join(',');
+                    console.log('audioData', JSON.stringify(audioData, null, 2));
+
+                    const pupeteerTimingMultiplier = 4.0;
+                    const slideTiming = audioData.map(d => pupeteerTimingMultiplier * d.duration).join(',');
 
                     console.log('\t🎥 Recording video...');
                     const puppeteer = require('puppeteer');
                     const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+                    // const { record } = require('puppeteer-recorder');
 
+
+                    const sourceFile = `input-video-11.mp4`;
 
                     /**
                      * Need to do three things:
@@ -148,23 +154,71 @@ class Gridyll {
                      *          needs to be passed into the pupeteer recording.
                      */
 
+                    const sizeMultiplier = 1.0;
 
                     const browser = await puppeteer.launch({
-                        defaultViewport: { width: 1280 * 2, height: 720 * 2 }
+                        defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier }
                     });
                     const page = await browser.newPage();
                     const recorder = new PuppeteerScreenRecorder(page, {
                         // ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
                         ffmpeg_Path: '/usr/local/bin/ffmpeg',
                         videoFrame: {
-                            width: 1280 * 2,
-                            height: 720 * 2,
+                            width: 1280 * sizeMultiplier,
+                            height: 720 * sizeMultiplier,
                         },
                         aspectRatio: '16:9',
                     });
-                    await recorder.start('video.mp4'); // video must have .mp4 has an extension.
+
+                    // page.on('pageerror', pageerr=> {
+                    //     console.log('pageerror occurred: ', pageerr);
+                    // })
+                    // console.log(`http://localhost:${videoPort}?slideTiming=${slideTiming}`)
+                    await page.setDefaultNavigationTimeout(0);
+
+                    await recorder.start(sourceFile); // video must have .mp4 has an extension.
                     await page.goto(`http://localhost:${videoPort}?slideTiming=${slideTiming}`);
-                    await page.waitForTimeout(12000);
+                    const watchDog = page.waitForFunction('window.status === "ready"');
+                    await watchDog;
+
+                    // await record({
+                    //     browser: browser, // Optional: a puppeteer Browser instance,
+                    //     page: page, // Optional: a puppeteer Page instance,
+                    //     output: 'video-input5.mp4',
+                    //     fps: 60,
+                    //     frames: 60 * audioData.reduce((memo, { duration }) => {
+                    //         return memo + duration;
+                    //     }, 0), // X seconds at 60 fps
+                    //     prepare: async function (browser, page) {
+                    //         await page.evaluate(function() {
+                    //             window.startMovie();
+                    //         });
+                    //     },
+                    //     render: function (browser, page, frame) { /* executed before each capture */ }
+                    // });
+
+                    // await page.waitForNavigation({
+                    //     waitUntil: 'networkidle0',
+                    // });
+
+                    // await page.evaluate((function() {
+                    //     const urlSearchParams = new URLSearchParams(window.location.search);
+                    //     const params = Object.fromEntries(urlSearchParams.entries());
+                    //     console.log('slideTiming', params['slideTiming']);
+                    //     const timings = (params['slideTiming'] || '').split(',').map(d => +d);
+                    //     console.log('timings', timings);
+                    // }))
+
+                    // await page.waitForTimeout(15000);
+                    // await page.waitForTimeout(15000);
+
+                    await page.evaluate(function() {
+                        window.startMovie();
+                    });
+
+                    await page.waitForTimeout(audioData.reduce((memo, { duration }) => {
+                        return memo + pupeteerTimingMultiplier * duration;
+                    }, 0));
                     await recorder.stop();
                     await browser.close();
                     console.log('\t🎥 Recording complete.');
@@ -173,16 +227,16 @@ class Gridyll {
 
                     let audioOffset = 0;
 
-                    await editly({
+                    const editlyOpts = {
                         // enableFfmpegLog: true,
-                        outPath: 'video2.mp4',
-                        width: 1280 * 2,
-                        height: 720 * 2,
+                        outPath: 'video-out.mp4',
+                        width: 1280 * sizeMultiplier,
+                        height: 720 * sizeMultiplier,
                         // defaults: {
                         //     layer: { fontPath: './assets/Patua_One/PatuaOne-Regular.ttf' },
                         // },
                         clips: [
-                            { layers: [{ type: 'video', path: 'video.mp4' }] }
+                            { layers: [{ type: 'video', path: sourceFile, cutFrom: 1.0 }] }
                         ],
                         audioNorm: { enable: true, gaussSize: 3, maxGain: 100 },
                         clipsAudioVolume: 50,
@@ -195,7 +249,11 @@ class Gridyll {
                             audioOffset += duration / 1000;
                             return ret;
                         })
-                    }).catch(console.error);
+                    }
+
+                    console.log('editly opts', JSON.stringify(editlyOpts, null, 2));
+
+                    await editly(editlyOpts).catch(console.error);
 
                     console.log('\t🎬 Compositing complete.\n');
                 }
