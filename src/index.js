@@ -24,6 +24,7 @@ const { exec, spawn } = require('child_process');
 const parseGridyllInput = require('./parse/parse-aml');
 const serializeIdyll = require('./serialize-idyll');
 const getVideoAudioData = require('./get-video-audio-data');
+const normalize = require('./normalize-data');
 
 // Class implementation
 
@@ -51,10 +52,13 @@ class Gridyll {
 
         // 3. For each target
         targets.forEach((target, i) => {
+
+
             console.log(`Serializing markup for target ${target}`);
+            const normalizedContent = normalize(content, target);
 
             //    3.1. Serialize Idyll markup
-            const outputText = serializeIdyll(target, idyllHeader, content);
+            const outputText = serializeIdyll(target, idyllHeader, normalizedContent);
 
             const idyllPath = path.join(this.projectPath, 'output', target, 'index.idyll');
             const idyllOutputPath = path.join(this.projectPath, 'output', target);
