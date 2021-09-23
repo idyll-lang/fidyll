@@ -26,23 +26,25 @@ module.exports = (content, target) => {
   scenes.forEach(scene => {
     scene.stages = (scene.stages || []).filter(stage => isInTarget(stage));
 
-    if (scene.forward) {
+    if (scene.foreward) {
       scene.stages = [{
         type: "stage",
-        text: scene.forward,
+        text: scene.foreward,
         parsed: {
           parameters: {...scene.parsed.parameters}
         }
-      },, ...scene.stages];
+      }, ...scene.stages];
 
-      delete scene.forward;
+      delete scene.foreward;
     }
 
     scene.stages.forEach((stage, idx) => {
       if (idx === 0) {
         stage.parsed.parameters = { ...scene.parsed.parameters, ...stage.parsed.parameters}
       } else {
-        stage.parsed.parameters = { ...scene.stages[idx - 1].parsed.parameters, ...stage.parsed.parameters}
+        console.log('idx', idx)
+        console.log(scene.stages);
+        stage.parsed.parameters = { ...(scene.stages[idx - 1].parsed.parameters), ...stage.parsed.parameters}
       }
     })
   });
@@ -55,5 +57,5 @@ module.exports = (content, target) => {
 
   console.log(JSON.stringify(normalized, null, 2));
 
-  return content;
+  return normalized;
 }
