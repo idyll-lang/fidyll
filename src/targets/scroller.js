@@ -19,6 +19,22 @@ module.exports = (header, content) => {
   const { data, ...headerProps } = header;
   console.log('header', header);
 
+  const metaNodes = [{
+    id: id++,
+    type: 'component',
+    name: 'meta',
+    properties: {
+      title: {
+        type: 'value',
+        value: headerProps.title || 'Article Title'
+      },
+      description: {
+        type: 'value',
+        value: headerProps.subtitle || ''
+      }
+    }
+  }];
+
   const headerNodes = [
     {
       id: id++,
@@ -327,6 +343,7 @@ module.exports = (header, content) => {
     type: 'component',
     name: 'root',
     children: [
+      ...metaNodes,
       ...headerNodes,
       ...varDeclarationNodes,
       ...introductionNodes,

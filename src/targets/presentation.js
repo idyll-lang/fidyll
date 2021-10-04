@@ -19,6 +19,22 @@ module.exports = (header, content) => {
 
   const { data, ...headerProps } = header;
 
+  const metaNodes = [{
+    id: id++,
+    type: 'component',
+    name: 'meta',
+    properties: {
+      title: {
+        type: 'value',
+        value: headerProps.title || 'Article Title'
+      },
+      description: {
+        type: 'value',
+        value: headerProps.subtitle || ''
+      }
+    }
+  }];
+
   const varNodes = content.scenes.reduce((memo, contentFragment) => {
     Object.keys(contentFragment.parsed.parameters || {}).forEach(param => {
       memo.push({
@@ -399,6 +415,7 @@ module.exports = (header, content) => {
     type: 'component',
     name: 'root',
     children: [
+      ...metaNodes,
       ...varNodes,
       ...headerNodes,
       ...slideshowNodes,
