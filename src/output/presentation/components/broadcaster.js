@@ -18,6 +18,10 @@ class Broadcaster extends React.Component {
       const urlSearchParams = new URLSearchParams(window.location.search);
       const params = Object.fromEntries(urlSearchParams.entries());
 
+      if (!params.live || params.live === 'false' || params.live === 0) {
+        return
+      }
+
       console.log('mount');
       load("https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js", (err) => {
         if (err) {
@@ -28,7 +32,7 @@ class Broadcaster extends React.Component {
             isPresenting: true
           })
 
-          this.peer = new Peer(this.props.peerkey);
+          this.peer = new Peer(`${this.props.peerkey}-${params.room}`);
           this.peer.on('open', function(id) {
             // console.log('My peer ID is: ' + id);
           });
@@ -41,7 +45,7 @@ class Broadcaster extends React.Component {
         } else {
           this.peer = new Peer();
           this.peer.on('open', (id) => {
-            this.conn = this.peer.connect(this.props.peerkey);
+            this.conn = this.peer.connect(`${this.props.peerkey}-${params.room}`);
             this.conn.on('open', () => {
               // here you have conn.id
               this.conn.send('hi!');
@@ -104,7 +108,7 @@ class Broadcaster extends React.Component {
           bottom: 0,
           zIndex: 1000,
           background: '#ddd'
-      }}>  
+      }}>
           <div>
                 {props.__slideshowIndex} / {props.__slideshowLength}
           </div>

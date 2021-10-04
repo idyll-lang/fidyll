@@ -5,7 +5,8 @@ const matter = require('gray-matter');
 const yaml = require('js-yaml');
 
 const preprocess = (text) => {
-    text = text.replace(/\:([^\s\n])/g, ': $1')
+    text = text.replace(/\:([^\s\n])/g, ': $1');
+    text = text.replace(/https\: \/\//g, 'https://');
     return text.trim();
 }
 

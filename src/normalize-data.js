@@ -18,10 +18,28 @@ module.exports = (content, target) => {
     return true;
   }
 
+  const isSkipped = (d) => {
+    if (d.parsed && d.parsed.skip) {
+      return true;
+    }
+    return false;
+  }
 
-  const introduction = content.filter(d => d.type === "text" && isInTarget(d));
-  const scenes = content.filter(d => d.type === "scene" && isInTarget(d));
-  const conclusion = content.filter(d => d.type === "conclusion" && isInTarget(d));
+  const isSoloed = (d) => {
+    if (d.parsed && d.parsed.only) {
+      return true;
+    }
+    return false;
+  }
+
+
+  let introduction = content.filter(d => d.type === "text" && isInTarget(d));
+  let scenes = content.filter(d => d.type === "scene" && isInTarget(d) && !isSkipped(d));
+  let conclusion = content.filter(d => d.type === "conclusion" && isInTarget(d));
+
+  if (scenes.some(d => isSoloed(d))) {
+    scenes = scenes.filter(d => isSoloed(d));
+  }
 
   scenes.forEach(scene => {
     scene.stages = (scene.stages || []).filter(stage => isInTarget(stage));
@@ -40,10 +58,12 @@ module.exports = (content, target) => {
 
     scene.stages.forEach((stage, idx) => {
       if (idx === 0) {
-        stage.parsed.parameters = { ...scene.parsed.parameters, ...stage.parsed.parameters}
+        const _stageParams = {...stage.parsed.parameters}
+        stage.parsed = { ...scene.parsed, ...stage.parsed };
+        stage.parsed.parameters = { ...scene.parsed.parameters, ..._stageParams };
       } else {
-        console.log('idx', idx)
-        console.log(scene.stages);
+        // console.log('idx', idx)
+        // console.log(scene.stages);
         stage.parsed.parameters = { ...(scene.stages[idx - 1].parsed.parameters), ...stage.parsed.parameters}
       }
     })

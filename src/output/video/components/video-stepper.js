@@ -24,14 +24,14 @@ class VideoStepper extends React.Component {
             index: currentIndex + 1
           })
           console.log('setTimeout', currentIndex, timings[currentIndex + 1] || 1000);
-          setTimeout(update, timings[currentIndex + 1] || 1000);
+          setTimeout(update, +(timings[currentIndex + 1] || 1000));
         } else {
           console.log('did not update');
         }
       }
 
       console.log('setTimeout', timings[0] || 1000);
-      setTimeout(update, timings[0] || 1000);
+      setTimeout(update, +(timings[0] || 1000));
     }
   }
 

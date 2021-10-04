@@ -26,6 +26,7 @@ const serializeIdyll = require('./serialize-idyll');
 const getVideoAudioData = require('./get-video-audio-data');
 const normalize = require('./normalize-data');
 
+
 // Class implementation
 
 class Gridyll {
@@ -49,6 +50,22 @@ class Gridyll {
         this.ensureTargetsExist(targets);
 
         let videoPort = 3000;
+        let staticPort = 3000;
+
+        let existingMetadata = {}
+        if (fs.existsSync(path.join(this.projectPath, 'metadata.json'))) {
+            existingMetadata = require(path.join(this.projectPath, 'metadata.json'));
+        }
+        const articleMetadata = {
+            ...existingMetadata,
+            title: idyllHeader.title,
+            description: idyllHeader.subtitle || ''
+        }
+        const writeMetadata = () => {
+            fs.writeFileSync(path.join(this.projectPath, 'metadata.json'), JSON.stringify(articleMetadata, null, 2));
+        }
+
+        writeMetadata();
 
         // 3. For each target
         targets.forEach((target, i) => {
@@ -69,11 +86,24 @@ class Gridyll {
             const staticInputPath = path.join(this.projectPath, 'static');
 
 
+
+
+            const captureScreenshotsOfElements = async (elements, pathPrefix) => {
+                const _outputPath = path.join(this.projectPath, 'output', target, 'build', 'static');
+                let _i = 0;
+                for (const element of elements) {
+                    await element.screenshot({ path: `${_outputPath}/${pathPrefix}-${_i}.png` });
+                    _i += 1;
+                }
+            };
+
             fs.writeFileSync(idyllPath, outputText);
             console.log(`Serialization complete.\n`)
 
             if (target === 'video') {
                 videoPort = 3000 + i;
+            } else if (target === 'static') {
+                staticPort = 3000 + i;
             }
 
             // console.log(`Executing for target ${target}`, `\n\tcd ${idyllOutputPath} && idyll --port ${3000 + i}`)
@@ -126,16 +156,62 @@ class Gridyll {
                 console.log(data.toString());
             })
             _idyll.stdout.on('data', async (data) => {
+                if (target === 'static' && data.includes('Serving files from:')) {
+                    console.log('Producing static PDF...');
+                    const puppeteer = require('puppeteer');
+
+                    const sizeMultiplier = 1.0;
+
+                    const browser = await puppeteer.launch({
+                        defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier }
+                    });
+                    const page = await browser.newPage();
+                    await page.setDefaultNavigationTimeout(0);
+
+                    await page.goto(`http://localhost:${staticPort}`);
+
+                    const graphics = await page.$$('div.idyll-graphic');
+                    await captureScreenshotsOfElements(graphics, 'static-graphic');
+
+
+                    const appendices = await page.$$('div.appendix-graphic-container');
+                    await captureScreenshotsOfElements(appendices, 'static-appendix');
+
+                    // replace the resulting HTML...
+                    const _staticOutputPath = path.resolve(path.join(this.projectPath, 'output', target, 'build', 'static'));
+                    await page.$$eval('div.idyll-graphic', (elements, _staticOutputPath) => {
+                        elements.forEach((element, _i) => {
+                            element.innerHTML = `<img src="${_staticOutputPath}/static-graphic-${_i}.png" />`;
+                        })
+                    }, _staticOutputPath);
+                    await page.$$eval('div.appendix-graphic-container', (elements, _staticOutputPath) => {
+                        elements.forEach((element, _i) => {
+                            element.innerHTML = `<img src="${_staticOutputPath}/static-appendix-${_i}.png" />`;
+                        })
+                    }, _staticOutputPath);
+                    const allHtml = await page.evaluate(() => document.querySelector('*').outerHTML);
+                    const _htmlOutputPath = path.join(this.projectPath, 'output', target, 'build', 'static.html');
+                    fs.writeFileSync(_htmlOutputPath, allHtml);
+
+                    console.log('Running pandoc conversion...');
+                    spawn(`pandoc ${_htmlOutputPath} -s -o ${path.join(this.projectPath, 'output', 'static-output.pdf')}`, {
+                        shell: true
+                    });
+                }
                 if (target === 'video' && data.includes('Serving files from:')) {
                     console.log('\n\t🎙️ Recording audio...');
                     const audioData = await getVideoAudioData(header, content);
 
-                    console.log('audioData', JSON.stringify(audioData, null, 2));
+                    // console.log('audioData', JSON.stringify(audioData, null, 2));
 
-                    const pupeteerTimingMultiplier = 4.0;
+                    const pupeteerTimingMultiplier = 1.0;
                     const slideTiming = audioData.map(d => pupeteerTimingMultiplier * d.duration).join(',');
+                    articleMetadata.slideTiming = slideTiming;
+                    writeMetadata();
+
 
                     console.log('\t🎥 Recording video...');
+                    // console.log('slide timings', slideTiming);
                     const puppeteer = require('puppeteer');
                     const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
                     // const { record } = require('puppeteer-recorder');
@@ -158,7 +234,7 @@ class Gridyll {
                      *          needs to be passed into the pupeteer recording.
                      */
 
-                    const sizeMultiplier = 1.0;
+                    const sizeMultiplier = 0.5;
 
                     const browser = await puppeteer.launch({
                         defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier }
@@ -172,6 +248,7 @@ class Gridyll {
                             height: 720 * sizeMultiplier,
                         },
                         aspectRatio: '16:9',
+                        // fps: 60
                     });
 
                     // page.on('pageerror', pageerr=> {
@@ -180,8 +257,10 @@ class Gridyll {
                     // console.log(`http://localhost:${videoPort}?slideTiming=${slideTiming}`)
                     await page.setDefaultNavigationTimeout(0);
 
-                    await recorder.start(sourceFile); // video must have .mp4 has an extension.
-                    await page.goto(`http://localhost:${videoPort}?slideTiming=${slideTiming}`);
+                    const writeStream = fs.createWriteStream(sourceFile);
+
+
+                    await page.goto(`http://localhost:${videoPort}?slideTiming=100,${slideTiming}`);
                     const watchDog = page.waitForFunction('window.status === "ready"');
                     await watchDog;
 
@@ -215,16 +294,23 @@ class Gridyll {
 
                     // await page.waitForTimeout(15000);
                     // await page.waitForTimeout(15000);
+                    await recorder.startStream(writeStream); // video must have .mp4 has an extension.
+                    await page.waitForTimeout(1000);
+
 
                     await page.evaluate(function() {
                         window.startMovie();
                     });
 
+                    // console.log('waiting for timeout....', audioData.reduce((memo, { duration }) => {
+                    //     return memo + pupeteerTimingMultiplier * duration;
+                    // }, 0));
                     await page.waitForTimeout(audioData.reduce((memo, { duration }) => {
                         return memo + pupeteerTimingMultiplier * duration;
                     }, 0));
                     await recorder.stop();
                     await browser.close();
+                    await writeStream.close();
                     console.log('\t🎥 Recording complete.');
 
                     console.log('\t🎬 Compositing video.');
@@ -240,22 +326,25 @@ class Gridyll {
                         //     layer: { fontPath: './assets/Patua_One/PatuaOne-Regular.ttf' },
                         // },
                         clips: [
-                            { layers: [{ type: 'video', path: sourceFile, cutFrom: 1.0 }] }
+                            { layers: [{ type: 'video', path: sourceFile, cutFrom: 1.1 }] }
                         ],
                         audioNorm: { enable: true, gaussSize: 3, maxGain: 100 },
                         clipsAudioVolume: 50,
-                        audioTracks: audioData.map(({ filename, duration }) => {
+                        audioTracks: audioData.map(({ filename, duration, text }) => {
                             let ret = {
                                 path: filename,
                                 start: audioOffset
                             }
+
+                            // console.log('Text', text);
+                            // console.log('Start', audioOffset);
 
                             audioOffset += duration / 1000;
                             return ret;
                         })
                     }
 
-                    console.log('editly opts', JSON.stringify(editlyOpts, null, 2));
+                    // console.log('editly opts', JSON.stringify(editlyOpts, null, 2));
 
                     await editly(editlyOpts).catch(console.error);
 
@@ -274,7 +363,7 @@ class Gridyll {
 
     ensureTargetsExist(targets) {
         targets.forEach((target) => {
-            console.log('target', target);
+            // console.log('target', target);
             if (!fs.pathExistsSync(path.join(this.projectPath, 'output', target))) {
                 console.log(`\tCreating target '${target}' at path ${path.join(this.projectPath, 'output', target)}`);
                 fs.copySync(path.join(__dirname, 'output', target), path.join(this.projectPath, 'output', target));

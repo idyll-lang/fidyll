@@ -277,8 +277,8 @@ module.exports = (header, content) => {
               properties: {
                 onEnterViewFully: {
                   type: 'expression',
-                  value: stage.parsed.parameters ? Object.keys(stage.parsed.parameters).map(k => `${paramToVar(k, sceneIdxContent - 1)} = ${stage.parsed.parameters[k]}`).join(';') : (_stageIdx === 0 ? (
-                    Object.keys(currentScene.parameters || {}).map(k => `${paramToVar(k, sceneIdxContent - 1)} = ${currentScene.parameters[k]}`).join(';')
+                  value: stage.parsed.parameters ? Object.keys(stage.parsed.parameters).map(k => `${paramToVar(k, sceneIdxContent - 1)} = ${JSON.stringify(stage.parsed.parameters[k])}`).join(';') : (_stageIdx === 0 ? (
+                    Object.keys(currentScene.parameters || {}).map(k => `${paramToVar(k, sceneIdxContent - 1)} = ${JSON.stringify(currentScene.parameters[k])}`).join(';')
                   ) : '')
                 }
               },

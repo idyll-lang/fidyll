@@ -12,8 +12,17 @@ html {
 .idyll-root > div:not(.article-header):not(.idyll-text-container) {
     grid-column: 1 / 5;
     margin: 0 auto;
-    background-color: #efefef;
+    /* background-color: #efefef; */
     width: 100%;
+}
+
+.appendix-graphic-plex {
+    grid-template-columns:  1fr 1fr 1fr 1fr;
+    display: grid;
+}
+
+.appendix-graphic-holder {
+    grid-column: auto;
 }
 
  .article-header {
@@ -35,13 +44,28 @@ html {
     grid-column: 2 / 4;
 }
 
+.aside {
+    display: block;
+    position: absolute;
+    width: 300px;
+    right: calc((10vw + 600px + 5px) / -2);
+    font-size: small;
+    color: #999;
+}
 
 @media (max-width: 40rem) {
      .idyll-root {
-        grid-template-columns:  auto 15rem 15rem auto;
+        grid-template-columns:  1fr 1fr 1fr 1fr;
+    }
+    .idyll-text-container {
+        grid-column: 1 / 5;
     }
 
     html {
         font-size: 10px;
+    }
+
+    .appendix-graphic-plex {
+        grid-template-columns:  1fr 1fr;
     }
 }
