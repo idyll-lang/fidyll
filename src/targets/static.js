@@ -175,107 +175,99 @@ module.exports = (header, content) => {
                   // },
                   ]
                 },
-                {
-                  id: id++,
-                  type: 'component',
-                  name: 'div',
-                  properties: {
-                    className: {
-                      value: 'appendix-graphic-plex',
-                      type: 'value'
-                    }
-                    // ,
-                    // style: {
-                    //   type: 'expression',
-                    //   value: `{
-                    //     display: 'grid',
-                    //     gridTemplateColumns: '${_range(0, Math.min(4, Object.keys(appendixProps || {}).map(k => {
-                    //       const { range, set } = appendixProps[k];
-                    //       let values;
-                    //       if (range) {
-                    //         values = _range(range[0], range[1], range[2]);
-                    //       } else if (set) {
-                    //         values = set;
-                    //       } else {
-                    //         return false;
-                    //       }
-                    //       return values
-                    //     }).filter(d => d).reduce((memo, v) => memo * v.length, 1)) - 1).map(v => '1fr').join(' ')}'
-                    //   }`
-                    // }
-                  },
-                  children: cartesian(Object.keys(appendixProps || {}).map(k => {
-                      const { range, set } = appendixProps[k];
+                ...cartesian(Object.keys(appendixProps || {}).map(k => {
+                  const { range, set } = appendixProps[k];
 
-                      let values;
-                      if (range) {
-                        values = _range(range[0], range[1], range[2]);
-                      } else if (set) {
-                        values = set;
-                      } else {
-                        return false;
+                  let values;
+                  if (range) {
+                    values = _range(range[0], range[1], range[2]);
+                  } else if (set) {
+                    values = set;
+                  } else {
+                    return false;
+                  }
+
+                  return values
+                }).filter(d => d)).reduce((memo, params) => {
+                  memo.push({
+                    id: id++,
+                    type: 'component',
+                    name: 'div',
+                    properties: {
+                      className: {
+                        type: 'value',
+                        value: 'appendix-graphic-holder'
+                      },
+                      style: {
+                        type: 'expression',
+                        value: `{
+                          margin: '0 auto',
+                          textAlign: 'center'
+                        }`
                       }
-
-                      return values
-                    }).filter(d => d)).reduce((memo, params) => {
-                      memo.push({
-                        id: id++,
-                        type: 'component',
-                        name: 'div',
-                        properties: {
-                          className: {
+                    },
+                    children: [{
+                      id: id++,
+                      type: 'component',
+                      name: contentFragment.parsed.graphic,
+                      properties: {
+                        ...sceneProps,
+                        ...Object.fromEntries(params.map((param, idx) => {
+                          return [controlNames[idx], {
                             type: 'value',
-                            value: 'appendix-graphic-holder'
-                          },
-                          style: {
-                            type: 'expression',
-                            value: `{
-                              margin: '0 auto',
-                              textAlign: 'center'
-                            }`
-                          }
-                        },
-                        children: [{
+                            value: param
+                          }]
+                        })),
+                        src: {
+                          type: 'value',
+                          value: `static/script-image-${sortKeys(Object.keys(contentFragment.parsed.parameters)).map((param, idx) => `${param}-${params[Object.keys(appendixProps || {}).indexOf(param)] || sceneProps[param].value}`).join('-')}.png`
+                        }
+                      }
+                    }, {
+                      id: id++,
+                      type: 'component',
+                      name: 'div',
+                      properties: {
+                        style: {
+                          type: 'expression',
+                          value: `{
+                            transform: 'scale(0.666)'
+                          }`
+                        }
+                      },
+                      children: params.map((param, idx) => {
+                        return {
                           id: id++,
-                          type: 'component',
-                          name: contentFragment.parsed.graphic,
-                          properties: {
-                            ...sceneProps,
-                            ...Object.fromEntries(params.map((param, idx) => {
-                              return [controlNames[idx], {
-                                type: 'value',
-                                value: param
-                              }]
-                            })),
-                            src: {
-                              type: 'value',
-                              value: `static/script-image-${sortKeys(Object.keys(contentFragment.parsed.parameters)).map((param, idx) => `${param}-${params[Object.keys(appendixProps || {}).indexOf(param)] || sceneProps[param].value}`).join('-')}.png`
-                            }
-                          }
-                        }, {
-                          id: id++,
-                          type: 'component',
-                          name: 'div',
-                          properties: {
-                            style: {
-                              type: 'expression',
-                              value: `{
-                                transform: 'scale(0.666)'
-                              }`
-                            }
-                          },
-                          children: params.map((param, idx) => {
-                            return {
-                              id: id++,
-                              type: 'textnode',
-                              value: `[Equation latex:"${controlNames[idx]} = ${param}" /][br/]`
-                            }
-                          })
-                        }]
+                          type: 'textnode',
+                          value: `[Equation latex:"${controlNames[idx]} = ${param}" /][br/]`
+                        }
                       })
-                      return memo;
-                    }, []).filter(d => d)
-                }]
+                    }]
+                  })
+                  return memo;
+                }, []).filter(d => d).reduce((memo, element, idx, arr) => {
+                  const appendixGroupSize = 4;
+                  memo.currentElements.push(element);
+                  if (memo.currentElements.length === appendixGroupSize || idx === arr.length - 1) {
+                    memo.elementGroups.push(memo.currentElements);
+                    memo.currentElements = [];
+                  }
+                  return memo;
+                }, { elementGroups: [], currentElements: [] }).elementGroups.map(( elementGroup ) => {
+                  return {
+                    id: id++,
+                    type: 'component',
+                    name: 'div',
+                    properties: {
+                      className: {
+                        value: 'appendix-graphic-plex',
+                        type: 'value'
+                      }
+                    },
+                    children: elementGroup
+                  }
+                }),
+]
               }]
             }
           ]
@@ -435,7 +427,7 @@ module.exports = (header, content) => {
                     type: 'expression',
                     value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
                   }
-                }), ...(contentFragment.parsed.graphicProps(sceneIdx, stageIdx) || {}) }
+                }), ...(contentFragment.parsed.graphicProps ? contentFragment.parsed.graphicProps(sceneIdx, stageIdx) : {}) }
               },
               // TODO - uncomment me to re-enable controls.
               stage.parsed.controls ?

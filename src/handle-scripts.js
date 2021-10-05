@@ -89,7 +89,6 @@ module.exports = (content, target, staticPath) => {
         const filename = `${staticPath}/script-image-${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `${k}-${stage.parsed.parameters[k]}`).join('-')}.png`;
 
         if (!fs.existsSync(filename)) {
-          console.log('creating image', filename)
           try {
             execSync(commandFunc(stage.parsed.parameters, filename));
           } catch(e) {
