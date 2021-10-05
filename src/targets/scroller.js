@@ -35,6 +35,7 @@ module.exports = (header, content) => {
     }
   }];
 
+  console.log(headerProps);
   const headerNodes = [
     {
       id: id++,
@@ -48,8 +49,14 @@ module.exports = (header, content) => {
         }
         return memo;
       }, {
-        background: '#ffffff',
-        color: '#333333'
+        background: {
+          type: 'value',
+          value: '#ffffff'
+        },
+        color: {
+          type: 'value',
+          value: '#333333'
+        }
       })
     }
   ].concat(header.data ? Object.keys(header.data).map(k => {

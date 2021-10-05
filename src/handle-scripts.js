@@ -68,12 +68,20 @@ module.exports = (content, target, staticPath) => {
       //   src: `static/script-image-${target}-${sceneIdx}-0.png`
       // }
       scene.parsed.graphic = 'img';
-      const src = target === 'static' ? `"static/script-image-" + ${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `"${k}-" + ${k}`).join(' + "-" + ')} + ".png"` :  `"static/script-image-" + ${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `"${k}-" + scene_${sceneIdx}_${k}`).join(' + "-" + ')} + ".png"`;
-      scene.parsed.graphicProps = {
-        src: {
-          type: 'expression',
-          value: src
+      let src = `"static/script-image-" + ${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `"${k}-" + scene_${sceneIdx}_${k}`).join(' + "-" + ')} + ".png"`;
+      scene.parsed.graphicProps = target === 'static' ? (sceneIdx, stageIdx) => {
+        src = `"static/script-image-" + ${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `"${k}-" + scene_${sceneIdx}_stage_${stageIdx}_${k}`).join(' + "-" + ')} + ".png"`
+        return {
+          src: {
+            type: 'expression',
+            value: src
+          }
         }
+      } : {
+          src: {
+            type: 'expression',
+            value: src
+          }
       };
 
       scene.stages = scene.stages.map((stage, stageIdx) => {
@@ -89,11 +97,8 @@ module.exports = (content, target, staticPath) => {
             console.warn(e);
           }
         }
-        console.log('checking controls')
 
         if (stage.parsed.controls) {
-
-          console.log('has controls')
 
           const allParams = Object.keys(scene.parsed.parameters);
           const controlParams = {...stage.parsed.controls}

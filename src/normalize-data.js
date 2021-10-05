@@ -49,7 +49,7 @@ module.exports = (content, target) => {
         type: "stage",
         text: scene.foreward,
         parsed: {
-          parameters: {...scene.parsed.parameters}
+          parameters: {...((scene.parsed || {}).parameters || {})}
         }
       }, ...scene.stages];
 
@@ -60,6 +60,7 @@ module.exports = (content, target) => {
       if (idx === 0) {
         const _stageParams = stage.parsed && stage.parsed.parameters ? {...stage.parsed.parameters} : {}
         stage.parsed = { ...scene.parsed, ...stage.parsed };
+        console.log(scene);
         stage.parsed.parameters = { ...scene.parsed.parameters, ..._stageParams };
       } else {
         // console.log('idx', idx)

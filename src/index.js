@@ -195,7 +195,7 @@ class Gridyll {
                     await captureScreenshotsOfElements(graphics, 'static-graphic');
 
 
-                    const appendices = await page.$$('div.appendix-graphic-container');
+                    const appendices = await page.$$('div.appendix-graphic-holder');
                     await captureScreenshotsOfElements(appendices, 'static-appendix');
 
                     // replace the resulting HTML...
@@ -205,7 +205,7 @@ class Gridyll {
                             element.innerHTML = `<img src="${_staticOutputPath}/static-graphic-${_i}.png" />`;
                         })
                     }, _staticOutputPath);
-                    await page.$$eval('div.appendix-graphic-container', (elements, _staticOutputPath) => {
+                    await page.$$eval('div.appendix-graphic-holder', (elements, _staticOutputPath) => {
                         elements.forEach((element, _i) => {
                             element.innerHTML = `<img src="${_staticOutputPath}/static-appendix-${_i}.png" />`;
                         })

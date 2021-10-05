@@ -26,6 +26,13 @@ const cartesian = (a) => {
   return [];
 }
 
+const sortKeys = (keys) => {
+  keys.sort((a, b) => {
+    return b.localeCompare(a);
+  })
+  return keys;
+}
+
 module.exports = (header, content) => {
 
 
@@ -40,21 +47,23 @@ module.exports = (header, content) => {
   const { data, ...headerProps } = header;
 
 
-  const varDeclarationNodes = content.scenes.reduce((memo, scene) => {
+  const varDeclarationNodes = content.scenes.reduce((memo, scene, sceneIdx) => {
     Object.keys(scene.parsed.parameters || {}).forEach(param => {
-      memo.push({
-        id: id++,
-        type: 'var',
-        properties: {
-          name: {
-            type: 'value',
-            value: param
-          },
-          value: {
-            type: 'value',
-            value: scene.parsed.parameters[param]
+      scene.stages.forEach((stage, stageIdx) => {
+        memo.push({
+          id: id++,
+          type: 'var',
+          properties: {
+            name: {
+              type: 'value',
+              value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
+            },
+            value: {
+              type: 'value',
+              value: stage.parsed.parameters[param]
+            }
           }
-        }
+        })
       })
     })
     sceneIdxVars++;
@@ -238,7 +247,10 @@ module.exports = (header, content) => {
                                 value: param
                               }]
                             })),
-                            ...(contentFragment.parsed.graphicProps || {})
+                            src: {
+                              type: 'value',
+                              value: `static/script-image-${sortKeys(Object.keys(contentFragment.parsed.parameters)).map((param, idx) => `${param}-${params[Object.keys(appendixProps || {}).indexOf(param)] || sceneProps[param].value}`).join('-')}.png`
+                            }
                           }
                         }, {
                           id: id++,
@@ -366,7 +378,7 @@ module.exports = (header, content) => {
     }
   }) : [];
 
-  const sceneNodes = content.scenes.map((contentFragment) => {
+  const sceneNodes = content.scenes.map((contentFragment, sceneIdx) => {
     sceneIdxContent++;
     return {
       id: id++,
@@ -385,7 +397,7 @@ module.exports = (header, content) => {
               }
             ]
           }
-        }) : []).concat(contentFragment.stages.reduce((arr, stage) => {
+        }) : []).concat(contentFragment.stages.reduce((arr, stage, stageIdx) => {
 
           arr = arr.concat(
             stage.text.trim().split(/\n\n+/).map(t => {
@@ -414,8 +426,8 @@ module.exports = (header, content) => {
                 name: contentFragment.parsed.graphic,
                 properties: {...Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
                   memo[param] = {
-                    type: 'value',
-                    value: stage.parsed.parameters[param]
+                    type: 'variable',
+                    value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
                   }
                   return memo;
                 }, {
@@ -423,132 +435,133 @@ module.exports = (header, content) => {
                     type: 'expression',
                     value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
                   }
-                }), ...(contentFragment.parsed.graphicProps || {}) }
+                }), ...(contentFragment.parsed.graphicProps(sceneIdx, stageIdx) || {}) }
               },
               // TODO - uncomment me to re-enable controls.
-              // stage.parsed.controls ?
-              // {
-              //   id: id++,
-              //   type: 'component',
-              //   name: 'div',
-              //   properties: {
-              //     className: {
-              //       type: 'value',
-              //       value: 'gridyll-control-container'
-              //     }
-              //   },
-              //   children: Object.keys(stage.parsed.controls || {}).map(k => {
-              //     const { freeform, range, set } = stage.parsed.controls[k];
+              stage.parsed.controls ?
+              {
+                id: id++,
+                type: 'component',
+                name: 'div',
+                properties: {
+                  className: {
+                    type: 'value',
+                    value: 'gridyll-control-container'
+                  }
+                },
+                children: Object.keys(stage.parsed.controls || {}).map(k => {
+                  const { freeform, range, set } = stage.parsed.controls[k];
 
-              //     let _control;
+                  let _control;
+                  const varName = `scene_${sceneIdx}_stage_${stageIdx}_${k}`;
 
-              //     if (range) {
-              //       if (range.length < 2) {
-              //         console.error('Error: range provided with fewer than 2 parameters. Please provide a range like [min, max], or [min, max, step].');
-              //       }
-              //       if (!range.length > 2) {
-              //         console.warn('Warning: range provided without set parameter');
-              //       }
+                  if (range) {
+                    if (range.length < 2) {
+                      console.error('Error: range provided with fewer than 2 parameters. Please provide a range like [min, max], or [min, max, step].');
+                    }
+                    if (!range.length > 2) {
+                      console.warn('Warning: range provided without set parameter');
+                    }
 
-              //       _control = {
-              //         id: id++,
-              //         type: 'component',
-              //         name: 'Range',
-              //         properties: {
-              //           value: {
-              //             type: 'variable',
-              //             value: k
-              //           },
-              //           min: {
-              //             type: 'value',
-              //             value: +range[0]
-              //           },
-              //           max: {
-              //             type: 'value',
-              //             value: +range[1]
-              //           },
-              //           step: range.length > 2 ? {
-              //             type: 'value',
-              //             value: +range[2]
-              //           } : undefined
-              //         }
-              //       }
-              //     }
-              //     else if (set) {
-              //       let _set = new Set(set)
-              //       if (_set.has(true) && _set.has(false) && _set.size === 2) {
-              //         _control = {
-              //           id: id++,
-              //           type: 'component',
-              //           name: 'Boolean',
-              //           properties: {
-              //             value: {
-              //               type: 'variable',
-              //               value: k
-              //             }
-              //           }
-              //         }
-              //       } else {
-              //         _control = {
-              //           id: id++,
-              //           type: 'component',
-              //           name: 'Select',
-              //           properties: {
-              //             value: {
-              //               type: 'variable',
-              //               value: k
-              //             },
-              //             options: {
-              //               type: 'expression',
-              //               value: JSON.stringify([...set.values()].map(v => { return { label: v, value: v} }))
-              //             }
-              //           }
-              //         }
-              //       }
-              //     }
-              //     else if (freeform) {
-              //       _control = {
-              //         id: id++,
-              //         type: 'component',
-              //         name: 'TextInput',
-              //         properties: {
-              //           value: {
-              //             type: 'variable',
-              //             value: k
-              //           }
-              //         }
-              //       }
-              //     }
-              //     else {
-              //       console.warn(`Could not identify control type for parameter ${k}`);
-              //       _control = {
-              //         id: id++,
-              //         type: 'component',
-              //         name: 'TextInput',
-              //         properties: {
-              //           value: {
-              //             type: 'variable',
-              //             value: k
-              //           }
-              //         }
-              //       }
-              //     }
-              //     return {
-              //       id: id++,
-              //       type: 'component',
-              //       name: 'div',
-              //       children: [
-              //         {
-              //           id: id++,
-              //           type: 'textnode',
-              //           value: k.replace(/_/g, ''),
-              //         },
-              //         _control
-              //       ]
-              //     }
-              //   })
-              // }
-              // : null
+                    _control = {
+                      id: id++,
+                      type: 'component',
+                      name: 'Range',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: varName
+                        },
+                        min: {
+                          type: 'value',
+                          value: +range[0]
+                        },
+                        max: {
+                          type: 'value',
+                          value: +range[1]
+                        },
+                        step: range.length > 2 ? {
+                          type: 'value',
+                          value: +range[2]
+                        } : undefined
+                      }
+                    }
+                  }
+                  else if (set) {
+                    let _set = new Set(set)
+                    if (_set.has(true) && _set.has(false) && _set.size === 2) {
+                      _control = {
+                        id: id++,
+                        type: 'component',
+                        name: 'Boolean',
+                        properties: {
+                          value: {
+                            type: 'variable',
+                            value: varName
+                          }
+                        }
+                      }
+                    } else {
+                      _control = {
+                        id: id++,
+                        type: 'component',
+                        name: 'Select',
+                        properties: {
+                          value: {
+                            type: 'variable',
+                            value: varName
+                          },
+                          options: {
+                            type: 'expression',
+                            value: JSON.stringify([...set.values()].map(v => { return { label: v, value: v} }))
+                          }
+                        }
+                      }
+                    }
+                  }
+                  else if (freeform) {
+                    _control = {
+                      id: id++,
+                      type: 'component',
+                      name: 'TextInput',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: varName
+                        }
+                      }
+                    }
+                  }
+                  else {
+                    console.warn(`Could not identify control type for parameter ${k}`);
+                    _control = {
+                      id: id++,
+                      type: 'component',
+                      name: 'TextInput',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: varName
+                        }
+                      }
+                    }
+                  }
+                  return {
+                    id: id++,
+                    type: 'component',
+                    name: 'div',
+                    children: [
+                      {
+                        id: id++,
+                        type: 'textnode',
+                        value: k.replace(/_/g, ''),
+                      },
+                      _control
+                    ]
+                  }
+                })
+              }
+              : null
             ].filter(d => d)
           })
 

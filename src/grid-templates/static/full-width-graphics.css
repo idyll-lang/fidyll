@@ -25,11 +25,17 @@ img {
     max-width: 100vw;
     max-height: 100%;
     width: 150%;
-    margin: 0 -25%;
+    margin: 6em -25% 2em -25%;
 }
 
 .appendix-graphic-holder {
     grid-column: auto;
+}
+
+.appendix-graphic-holder img {
+    max-width: 600px;
+    width: 100%;
+    margin: 4em 0.5em 0 0.5em;
 }
 
  .article-header {
