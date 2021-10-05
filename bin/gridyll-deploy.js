@@ -81,7 +81,7 @@ const outputHTML = `
           ${metadata.title ?
             `<div style="margin-bottom: 2em;">
               <p>
-                ${metadata.title} is a cross-platform interactive article created with <a href="">Gridyll</a>. Choose your
+                ${metadata.title} is a multi-format interactive article. Choose your
                 experience below.
               </p>
             </div>`

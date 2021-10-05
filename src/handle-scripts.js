@@ -82,7 +82,12 @@ module.exports = (content, target, staticPath) => {
 
         if (!fs.existsSync(filename)) {
           console.log('creating image', filename)
-          execSync(commandFunc(stage.parsed.parameters, filename));
+          try {
+            execSync(commandFunc(stage.parsed.parameters, filename));
+          } catch(e) {
+            console.warn('Failed to generate file', filename)
+            console.warn(e);
+          }
         }
         console.log('checking controls')
 
@@ -125,7 +130,12 @@ module.exports = (content, target, staticPath) => {
             const controlFile = `${staticPath}/script-image-${sortKeys(Object.keys(paramObj)).map(k => `${k}-${paramObj[k]}`).join('-')}.png`;
 
             if (!fs.existsSync(controlFile)) {
-              execSync(commandFunc(paramObj, controlFile));
+              try {
+                execSync(commandFunc(paramObj, controlFile));
+              } catch(e) {
+                console.warn('Failed to generate file', controlFile)
+                console.warn(e);
+              }
             }
           })
         }
