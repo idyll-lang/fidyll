@@ -13,6 +13,7 @@ module.exports = (header, content) => {
   let sceneIdxVars = 0;
   let sceneIdxVarsControls = 0;
   let sceneIdxContent = 0, sceneIdxContentControls = 0, sceneIdxContentSlides = 0;
+  let presenterNotesIndex = 0;
 
   let sceneStartIndex = 1, sceneEndIndex = -1;
   let sceneStartIndexControls = 1, sceneEndIndexControls = -1;
@@ -160,7 +161,7 @@ module.exports = (header, content) => {
                 }, {
                   data: {
                     type: 'expression',
-                    value: `{ ${Object.keys(header.data).map(k => { return `${k}:${k}` }).join(', ')} }`
+                    value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
                   }
                 })
               }
@@ -265,6 +266,47 @@ module.exports = (header, content) => {
         }, {})
       },
       children: [{
+        id: id++,
+        type: 'component',
+        name: 'div',
+        properties: {
+          className: {
+            type: 'value',
+            value: 'gridyll-presenter-notes'
+          }
+        },
+        children: content.scenes.reduce((memo, scene) => {
+          scene.stages.forEach((stage) => {
+            memo.push({
+              id: id++,
+              type: 'component',
+              name: 'Conditional',
+              properties: {
+                if: {
+                  type: "expression",
+                  value: `__slideshowIndex === ${++presenterNotesIndex}`
+                }
+              },
+              children: (stage.text || '').trim().split(/\n\n+/).map(t => {
+                return {
+                  id: id++,
+                  type: 'component',
+                  name: 'p',
+                  children: [
+                    {
+                      id: id++,
+                      type: 'textnode',
+                      value: t
+                    }
+                  ]
+                }
+              })
+            })
+          })
+          return memo;
+        }, [])
+      },
+        {
         id: id++,
         type: 'component',
         name: 'div',

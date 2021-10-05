@@ -58,7 +58,7 @@ module.exports = (content, target) => {
 
     scene.stages.forEach((stage, idx) => {
       if (idx === 0) {
-        const _stageParams = {...stage.parsed.parameters}
+        const _stageParams = stage.parsed && stage.parsed.parameters ? {...stage.parsed.parameters} : {}
         stage.parsed = { ...scene.parsed, ...stage.parsed };
         stage.parsed.parameters = { ...scene.parsed.parameters, ..._stageParams };
       } else {
@@ -75,7 +75,7 @@ module.exports = (content, target) => {
     conclusion
   }
 
-  console.log(JSON.stringify(normalized, null, 2));
+  // console.log(JSON.stringify(normalized, null, 2));
 
   return normalized;
 }

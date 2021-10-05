@@ -18,6 +18,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const editly = require('editly');
+const copy = require('fast-copy');
 
 const { exec, spawn } = require('child_process');
 
@@ -25,6 +26,7 @@ const parseGridyllInput = require('./parse/parse-aml');
 const serializeIdyll = require('./serialize-idyll');
 const getVideoAudioData = require('./get-video-audio-data');
 const normalize = require('./normalize-data');
+const handleScripts = require('./handle-scripts');
 
 
 // Class implementation
@@ -71,12 +73,6 @@ class Gridyll {
         targets.forEach((target, i) => {
 
 
-            console.log(`Serializing markup for target ${target}`);
-            const normalizedContent = normalize(content, target);
-
-            //    3.1. Serialize Idyll markup
-            const outputText = serializeIdyll(target, idyllHeader, normalizedContent);
-
             const idyllPath = path.join(this.projectPath, 'output', target, 'index.idyll');
             const idyllOutputPath = path.join(this.projectPath, 'output', target);
             const componentsOutputPath = path.join(this.projectPath, 'output', target, 'components');
@@ -84,6 +80,18 @@ class Gridyll {
             const dataInputPath = path.join(this.projectPath, 'data');
             const staticOutputPath = path.join(this.projectPath, 'output', target, 'static');
             const staticInputPath = path.join(this.projectPath, 'static');
+
+
+            console.log(`Serializing markup for target ${target}`);
+            let normalizedContent = normalize(copy(content), target);
+            normalizedContent = handleScripts(normalizedContent, target, staticInputPath);
+
+            console.log(JSON.stringify(normalizedContent, null, 2));
+
+            //    3.1. Serialize Idyll markup
+            const outputText = serializeIdyll(target, idyllHeader, normalizedContent);
+
+
 
 
 
@@ -144,9 +152,21 @@ class Gridyll {
 
 
             // copy data and components
-            fs.copySync(this.componentsPath, componentsOutputPath);
-            fs.copySync(dataInputPath, dataOutputPath);
-            fs.copySync(staticInputPath, staticOutputPath);
+            try {
+                fs.copySync(this.componentsPath, componentsOutputPath);
+            } catch(e) {
+                console.warn('No components found...');
+            }
+            try {
+                fs.copySync(dataInputPath, dataOutputPath);
+            } catch(e) {
+                console.warn('No data found...');
+            }
+            try {
+                fs.copySync(staticInputPath, staticOutputPath);
+            } catch(e) {
+                console.warn('No static files found...');
+            }
 
             const _idyll = spawn(`cd ${idyllOutputPath} && idyll --compileLibs=true --ssr=false --port ${3000 + i}`, {
                 shell: true
@@ -155,6 +175,7 @@ class Gridyll {
             _idyll.stderr.on('data', (data) => {
                 console.log(data.toString());
             })
+
             _idyll.stdout.on('data', async (data) => {
                 if (target === 'static' && data.includes('Serving files from:')) {
                     console.log('Producing static PDF...');

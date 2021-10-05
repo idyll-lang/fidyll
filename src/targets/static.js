@@ -51,7 +51,7 @@ module.exports = (header, content) => {
     }, {
       data: {
         type: 'expression',
-        value: `{ ${Object.keys(header.data).map(k => { return `${k}:${k}` }).join(', ')} }`
+        value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
       }
     })
     //   const xprod = cartesian(Object.keys(contentFragment.parsed.controls || {}).map(k => {
@@ -295,7 +295,7 @@ module.exports = (header, content) => {
     })
   }];
 
-  const dataNodes = header.data ? Object.keys(header.data).map(k => {
+  const dataNodes = header.data ? Object.keys(header.data || {}).map(k => {
     const source = header.data[k];
     return {
       id: id++,
@@ -398,7 +398,7 @@ module.exports = (header, content) => {
                 }, {
                   data: {
                     type: 'expression',
-                    value: `{ ${Object.keys(header.data).map(k => { return `${k}:${k}` }).join(', ')} }`
+                    value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
                   }
                 })
               }

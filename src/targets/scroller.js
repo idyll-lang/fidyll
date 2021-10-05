@@ -153,7 +153,7 @@ module.exports = (header, content) => {
               }, {
                 data: {
                   type: 'expression',
-                  value: `{ ${Object.keys(header.data).map(k => { return `${k}:${k}` }).join(', ')} }`
+                  value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
                 }
               })
             },

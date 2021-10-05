@@ -54,6 +54,12 @@ html {
     width: auto !important;
   }
 
+
+  .idyll-scroll-graphic img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
   .idyll-scroll-text .idyll-step {
     border: solid 1px #ddd;
     box-shadow: #ddd 2px 2px 3px;
