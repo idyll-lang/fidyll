@@ -25,7 +25,7 @@ data:
 ---
 
 
-Article introduction
+Introductory text goes here....
 
 {scene}
 summary: A scene is the top level object. Each scene has a graphic and multiple stages.
