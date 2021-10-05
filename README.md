@@ -39,8 +39,7 @@ appendix:
     paramB:
         range: [0, 10, 0.5]
 
-When defining a scene you define all the parameters associated with it. These parameters will be passed into the graphic. If an appendix option is defined,
-it is used to create an appendix in static versions of the document by creating the graphic for each entry in the cross product of all of the parameters.
+When defining a scene you define all the parameters associated with it. These parameters will be passed into the graphic along with any datasets defined in the header. If an appendix option is defined, it is used to create an appendix in static versions of the document by creating the graphic for each entry in the cross product of all of the parameters.
 
 {stage}
 summary: A stage consists of a set of parameter values, and optionally a set of controls.
