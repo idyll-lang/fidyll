@@ -86,7 +86,7 @@ class Gridyll {
             let normalizedContent = normalize(copy(content), target);
             normalizedContent = handleScripts(normalizedContent, target, staticInputPath);
 
-            console.log(JSON.stringify(normalizedContent, null, 2));
+            // console.log(JSON.stringify(normalizedContent, null, 2));
 
             //    3.1. Serialize Idyll markup
             const outputText = serializeIdyll(target, idyllHeader, normalizedContent);

@@ -107,20 +107,23 @@ class Broadcaster extends React.Component {
           right: 0,
           bottom: 0,
           zIndex: 1000,
-          background: '#ddd'
+          background: '#ddd',
+          padding: '1em'
       }}>
           <div>
-                {props.__slideshowIndex} / {props.__slideshowLength}
+                {props.__slideshowIndex + 1} / {props.__slideshowLength}
+          </div>
+          <div style={{display: 'flex', flexDirection: 'row'}}>
+            <button onClick={() => this.emitUpdate({ __slideshowIndex: Math.max(0, (props.__slideshowIndex - 1)) })}>
+                Previous
+            </button>
+            <button onClick={() => this.emitUpdate({ __slideshowIndex: (props.__slideshowIndex + 1) % props.__slideshowLength })}>
+                Next
+            </button>
           </div>
           <div>
               {props.children}
           </div>
-          <button onClick={() => this.emitUpdate({ __slideshowIndex: Math.max(0, (props.__slideshowIndex - 1)) })}>
-              Previous
-          </button>
-          <button onClick={() => this.emitUpdate({ __slideshowIndex: (props.__slideshowIndex + 1) % props.__slideshowLength })}>
-              Next
-          </button>
       </div>)
 
     }

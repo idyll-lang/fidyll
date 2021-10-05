@@ -93,7 +93,7 @@ const outputHTML = `
             `<a class="article-link" href="./presentation/?live=false">Interactive Slideshow</a>`
           : ''}
           ${directories.includes('static') ?
-            `<a class="article-link" href="./static-html/">Static HTML</a>`
+            `<a class="article-link" href="./static-html/">Low-motion HTML</a>`
           : ''}
           ${files.includes('static-output.pdf') ?
             `<a class="article-link" href="./static-output.pdf">PDF</a>`

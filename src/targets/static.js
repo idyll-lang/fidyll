@@ -39,6 +39,28 @@ module.exports = (header, content) => {
   let sceneIdxContent = 0;
   const { data, ...headerProps } = header;
 
+
+  const varDeclarationNodes = content.scenes.reduce((memo, scene) => {
+    Object.keys(scene.parsed.parameters || {}).forEach(param => {
+      memo.push({
+        id: id++,
+        type: 'var',
+        properties: {
+          name: {
+            type: 'value',
+            value: param
+          },
+          value: {
+            type: 'value',
+            value: scene.parsed.parameters[param]
+          }
+        }
+      })
+    })
+    sceneIdxVars++;
+    return memo;
+  }, []);
+
   const appendices = content.scenes.map((contentFragment, i) => {
     const appendixProps = contentFragment.parsed.appendix || contentFragment.parsed.controls || {};
 
@@ -215,7 +237,8 @@ module.exports = (header, content) => {
                                 type: 'value',
                                 value: param
                               }]
-                            }))
+                            })),
+                            ...(contentFragment.parsed.graphicProps || {})
                           }
                         }, {
                           id: id++,
@@ -389,7 +412,7 @@ module.exports = (header, content) => {
                 id: id++,
                 type: 'component',
                 name: contentFragment.parsed.graphic,
-                properties: Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
+                properties: {...Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
                   memo[param] = {
                     type: 'value',
                     value: stage.parsed.parameters[param]
@@ -400,9 +423,133 @@ module.exports = (header, content) => {
                     type: 'expression',
                     value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
                   }
-                })
-              }
-            ]
+                }), ...(contentFragment.parsed.graphicProps || {}) }
+              },
+              // TODO - uncomment me to re-enable controls.
+              // stage.parsed.controls ?
+              // {
+              //   id: id++,
+              //   type: 'component',
+              //   name: 'div',
+              //   properties: {
+              //     className: {
+              //       type: 'value',
+              //       value: 'gridyll-control-container'
+              //     }
+              //   },
+              //   children: Object.keys(stage.parsed.controls || {}).map(k => {
+              //     const { freeform, range, set } = stage.parsed.controls[k];
+
+              //     let _control;
+
+              //     if (range) {
+              //       if (range.length < 2) {
+              //         console.error('Error: range provided with fewer than 2 parameters. Please provide a range like [min, max], or [min, max, step].');
+              //       }
+              //       if (!range.length > 2) {
+              //         console.warn('Warning: range provided without set parameter');
+              //       }
+
+              //       _control = {
+              //         id: id++,
+              //         type: 'component',
+              //         name: 'Range',
+              //         properties: {
+              //           value: {
+              //             type: 'variable',
+              //             value: k
+              //           },
+              //           min: {
+              //             type: 'value',
+              //             value: +range[0]
+              //           },
+              //           max: {
+              //             type: 'value',
+              //             value: +range[1]
+              //           },
+              //           step: range.length > 2 ? {
+              //             type: 'value',
+              //             value: +range[2]
+              //           } : undefined
+              //         }
+              //       }
+              //     }
+              //     else if (set) {
+              //       let _set = new Set(set)
+              //       if (_set.has(true) && _set.has(false) && _set.size === 2) {
+              //         _control = {
+              //           id: id++,
+              //           type: 'component',
+              //           name: 'Boolean',
+              //           properties: {
+              //             value: {
+              //               type: 'variable',
+              //               value: k
+              //             }
+              //           }
+              //         }
+              //       } else {
+              //         _control = {
+              //           id: id++,
+              //           type: 'component',
+              //           name: 'Select',
+              //           properties: {
+              //             value: {
+              //               type: 'variable',
+              //               value: k
+              //             },
+              //             options: {
+              //               type: 'expression',
+              //               value: JSON.stringify([...set.values()].map(v => { return { label: v, value: v} }))
+              //             }
+              //           }
+              //         }
+              //       }
+              //     }
+              //     else if (freeform) {
+              //       _control = {
+              //         id: id++,
+              //         type: 'component',
+              //         name: 'TextInput',
+              //         properties: {
+              //           value: {
+              //             type: 'variable',
+              //             value: k
+              //           }
+              //         }
+              //       }
+              //     }
+              //     else {
+              //       console.warn(`Could not identify control type for parameter ${k}`);
+              //       _control = {
+              //         id: id++,
+              //         type: 'component',
+              //         name: 'TextInput',
+              //         properties: {
+              //           value: {
+              //             type: 'variable',
+              //             value: k
+              //           }
+              //         }
+              //       }
+              //     }
+              //     return {
+              //       id: id++,
+              //       type: 'component',
+              //       name: 'div',
+              //       children: [
+              //         {
+              //           id: id++,
+              //           type: 'textnode',
+              //           value: k.replace(/_/g, ''),
+              //         },
+              //         _control
+              //       ]
+              //     }
+              //   })
+              // }
+              // : null
+            ].filter(d => d)
           })
 
           return arr;
@@ -438,6 +585,7 @@ module.exports = (header, content) => {
     name: 'root',
     children: [
       ...metaNodes,
+      ...varDeclarationNodes,
       ...headerNodes,
       ...dataNodes,
       ...introductionNodes,

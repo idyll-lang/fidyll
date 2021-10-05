@@ -152,7 +152,7 @@ module.exports = (header, content) => {
                 id: id++,
                 type: 'component',
                 name: contentFragment.parsed.graphic,
-                properties: Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
+                properties: { ...Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
                   memo[param] = {
                     type: 'variable',
                     value: paramToVar(param, sceneIdxContent-1)
@@ -163,7 +163,7 @@ module.exports = (header, content) => {
                     type: 'expression',
                     value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
                   }
-                })
+                }), ...(contentFragment.parsed.graphicProps || {}) }
               }
             ]
           })
@@ -316,134 +316,135 @@ module.exports = (header, content) => {
             value: 'gridyll-control-container'
           }
         },
-        children: content.scenes.reduce((memo, contentFragment) => {
+        children: content.scenes.reduce((memo, scene) => {
 
-          sceneIdxContentControls++;
-          sceneEndIndexControls = sceneStartIndexControls + contentFragment.stages.length;
-          memo.push({
-            id: id++,
-            type: 'component',
-            name: 'Conditional',
-            properties: {
-              if: {
-                type: "expression",
-                value: `__slideshowIndex >= ${sceneStartIndexControls} && __slideshowIndex < ${sceneEndIndexControls}`
-              }
-            },
-            children: Object.keys(contentFragment.parsed.controls || {}).map(k => {
-              const getControl = () => {
-                const { freeform, range, set } = contentFragment.parsed.controls[k];
 
-                if (range) {
-                  if (range.length < 2) {
-                    console.error('Error: range provided with fewer than 2 parameters. Please provide a range like [min, max], or [min, max, step].');
-                  }
-                  if (!range.length > 2) {
-                    console.warn('Warning: range provided without set parameter');
-                  }
-
-                  return {
-                    id: id++,
-                    type: 'component',
-                    name: 'Range',
-                    properties: {
-                      value: {
-                        type: 'variable',
-                        value: paramToVar(k, sceneIdxContentControls-1)
-                      },
-                      min: {
-                        type: 'value',
-                        value: +range[0]
-                      },
-                      max: {
-                        type: 'value',
-                        value: +range[1]
-                      },
-                      step: range.length > 2 ? {
-                        type: 'value',
-                        value: +range[2]
-                      } : undefined
-                    }
-                  }
+          scene.stages.forEach((stage) => {
+            memo.push({
+              id: id++,
+              type: 'component',
+              name: 'Conditional',
+              properties: {
+                if: {
+                  type: "expression",
+                  value: `__slideshowIndex == ${sceneStartIndexControls++}`
                 }
-                else if (set) {
-                  let _set = new Set(set)
-                  if (_set.has(true) && _set.has(false) && _set.size === 2) {
+              },
+              children: Object.keys(stage.parsed.controls || {}).map(k => {
+                const getControl = () => {
+                  const { freeform, range, set } = stage.parsed.controls[k];
+
+                  if (range) {
+                    if (range.length < 2) {
+                      console.error('Error: range provided with fewer than 2 parameters. Please provide a range like [min, max], or [min, max, step].');
+                    }
+                    if (!range.length > 2) {
+                      console.warn('Warning: range provided without set parameter');
+                    }
+
                     return {
                       id: id++,
                       type: 'component',
-                      name: 'Boolean',
+                      name: 'Range',
                       properties: {
                         value: {
                           type: 'variable',
-                          value: paramToVar(k, sceneIdxContentControls-1)
+                          value: paramToVar(k, sceneIdxContentControls)
+                        },
+                        min: {
+                          type: 'value',
+                          value: +range[0]
+                        },
+                        max: {
+                          type: 'value',
+                          value: +range[1]
+                        },
+                        step: range.length > 2 ? {
+                          type: 'value',
+                          value: +range[2]
+                        } : undefined
+                      }
+                    }
+                  }
+                  else if (set) {
+                    let _set = new Set(set)
+                    if (_set.has(true) && _set.has(false) && _set.size === 2) {
+                      return {
+                        id: id++,
+                        type: 'component',
+                        name: 'Boolean',
+                        properties: {
+                          value: {
+                            type: 'variable',
+                            value: paramToVar(k, sceneIdxContentControls)
+                          }
+                        }
+                      }
+                    }
+                    return {
+                      id: id++,
+                      type: 'component',
+                      name: 'Select',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: paramToVar(k, sceneIdxContentControls)
+                        },
+                        options: {
+                          type: 'expression',
+                          value: JSON.stringify([...set.values()].map(v => { return { label: v, value: v} }))
                         }
                       }
                     }
                   }
-                  return {
-                    id: id++,
-                    type: 'component',
-                    name: 'Select',
-                    properties: {
-                      value: {
-                        type: 'variable',
-                        value: paramToVar(k, sceneIdxContentControls-1)
-                      },
-                      options: {
-                        type: 'expression',
-                        value: JSON.stringify([...set.values()].map(v => { return { label: v, value: v} }))
+                  else if (freeform) {
+                    return {
+                      id: id++,
+                      type: 'component',
+                      name: 'TextInput',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: paramToVar(k, sceneIdxContentControls)
+                        }
+                      }
+                    }
+                  }
+                  else {
+                    console.warn(`Could not identify control type for parameter ${k}`);
+                    return {
+                      id: id++,
+                      type: 'component',
+                      name: 'TextInput',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: paramToVar(k, sceneIdxContentControls)
+                        }
                       }
                     }
                   }
                 }
-                else if (freeform) {
-                  return {
-                    id: id++,
-                    type: 'component',
-                    name: 'TextInput',
-                    properties: {
-                      value: {
-                        type: 'variable',
-                        value: paramToVar(k, sceneIdxContentControls-1)
-                      }
-                    }
-                  }
-                }
-                else {
-                  console.warn(`Could not identify control type for parameter ${k}`);
-                  return {
-                    id: id++,
-                    type: 'component',
-                    name: 'TextInput',
-                    properties: {
-                      value: {
-                        type: 'variable',
-                        value: paramToVar(k, sceneIdxContentControls-1)
-                      }
-                    }
-                  }
-                }
-              }
 
-              return {
-                id: id++,
-                type: 'component',
-                name: 'div',
-                children: [
-                  {
-                    id: id++,
-                    type: 'textnode',
-                    value: k.replace(/\_/g, ' ')
-                  },
-                  getControl()
-                ]
-              }
+                return {
+                  id: id++,
+                  type: 'component',
+                  name: 'div',
+                  children: [
+                    {
+                      id: id++,
+                      type: 'textnode',
+                      value: k.replace(/\_/g, ' ')
+                    },
+                    getControl()
+                  ]
+                }
+              })
             })
           })
 
-          sceneStartIndexControls = sceneEndIndexControls;
 
+          sceneIdxContentControls++;
           return memo;
         }, [])
       }]
