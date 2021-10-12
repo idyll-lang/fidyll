@@ -60,7 +60,8 @@ module.exports = (header, content) => {
             },
             value: {
               type: 'value',
-              value: stage.parsed.parameters[param]
+              type: Array.isArray(stage.parsed.parameters[param]) ? 'expression' : 'value',
+              value: Array.isArray(stage.parsed.parameters[param]) ? JSON.stringify(stage.parsed.parameters[param]) : stage.parsed.parameters[param]
             }
           }
         })
@@ -596,12 +597,24 @@ module.exports = (header, content) => {
       ...introductionNodes,
       ...sceneNodes,
       ...conclusionNodes,
+      {
+        id: id++,
+        type: 'component',
+        name: 'TextContainer',
+        properties: {},
+        children: [{
+          id: id++,
+          type: 'component',
+          name: 'Cite.References',
+          properties: {},
+          children: []
+        }]
+      },
       ...appendices
     ]
   };
 
 
   return ast;
-
 }
 

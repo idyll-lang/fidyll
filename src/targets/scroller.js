@@ -97,8 +97,8 @@ module.exports = (header, content) => {
             value: paramToVar(param, sceneIdxVars)
           },
           value: {
-            type: 'value',
-            value: scene.parsed.parameters[param]
+            type: Array.isArray(scene.parsed.parameters[param]) ? 'expression' : 'value',
+            value: Array.isArray(scene.parsed.parameters[param]) ? JSON.stringify(scene.parsed.parameters[param]) : scene.parsed.parameters[param]
           }
         }
       })
@@ -476,10 +476,22 @@ module.exports = (header, content) => {
       ...varDeclarationNodes,
       ...introductionNodes,
       ...sceneNodes,
-      ...conclusionNodes
-      ]
+      ...conclusionNodes,
+      {
+        id: id++,
+        type: 'component',
+        name: 'TextContainer',
+        properties: {},
+        children: [{
+          id: id++,
+          type: 'component',
+          name: 'Cite.References',
+          properties: {},
+          children: []
+        }]
+      }
+    ]
   };
 
   return ast;
-
 }

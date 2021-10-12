@@ -81,7 +81,7 @@ const outputHTML = `
           ${metadata.title ?
             `<div style="margin-bottom: 2em;">
               <p>
-                ${metadata.title} is a multi-format interactive article. Choose your
+                <i>${metadata.title}</i> is a multi-format interactive article. Choose your
                 experience below.
               </p>
             </div>`
@@ -96,7 +96,10 @@ const outputHTML = `
             `<a class="article-link" href="./static-html/">Low-motion HTML</a>`
           : ''}
           ${files.includes('static-output.pdf') ?
-            `<a class="article-link" href="./static-output.pdf">PDF</a>`
+            `<a class="article-link" href="./static-output.pdf">Static PDF</a>`
+          : ''}
+          ${files.includes('data-video.mp4') ?
+            `<a class="article-link" href="./data-video.mp4">Video</a>`
           : ''}
 
           ${directories.includes('presentation') ?
@@ -104,12 +107,19 @@ const outputHTML = `
             <a class="article-link" onclick="var roomcode = prompt('Enter room code'); roomcode ? window.location = ('./presentation/?live=true&room=' + roomcode) : null">
               Join live presentation
             </a>
-            <a class="article-link" onclick="var presentroomcode = prompt('Enter room code'); presentroomcode ? window.open('./presentation/?live=true&presenting=true&room=' + presentroomcode, '_blank', 'location=yes,height=400,width=600') : null; presentroomcode ? window.location = ('./presentation/?live=true&room=' + presentroomcode) : null">
+            <a class="article-link" onclick="var presentroomcode = prompt('Enter room code'); presentroomcode ? window.open('./presentation/?live=true&presenting=true&room=' + presentroomcode, '_blank', 'location=yes,height=400,width=600') : null; presentroomcode ? setTimeout(() => window.location = ('./presentation/?live=true&room=' + presentroomcode), 2500) : null">
               Start live presentation
             </a>
           </div>`
         : ''
         }
+        ${metadata.title ?
+          `<div style="margin-top: 2em;">
+            <p>
+              See <a href="..">all examples</a>.
+            </p>
+          </div>`
+           : ''}
       </div>
     </div>
   </body>

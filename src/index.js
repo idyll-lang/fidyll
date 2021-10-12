@@ -28,6 +28,15 @@ const getVideoAudioData = require('./get-video-audio-data');
 const normalize = require('./normalize-data');
 const handleScripts = require('./handle-scripts');
 
+function delay(time) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve, time)
+    });
+ }
+
+ const targetMap = {
+    video: 'presentation'
+  }
 
 // Class implementation
 
@@ -124,7 +133,7 @@ class Gridyll {
             //      - Determine separately for each section
             //          - maybe... associate constraints with each template?
             const stylesPath = path.join(this.projectPath, 'output', target, 'styles.css');
-            const templateOptions = fs.readdirSync(path.join(__dirname, 'grid-templates', target)).filter(f => !['.ds_store'].includes(f.toLowerCase()));
+            const templateOptions = fs.readdirSync(path.join(__dirname, 'grid-templates', targetMap[target] || target)).filter(f => !['.ds_store'].includes(f.toLowerCase()));
 
             let chosenTemplate;
             if (!templateOptions.length) {
@@ -137,7 +146,7 @@ class Gridyll {
                 chosenTemplate = templateOptions[0];
             }
 
-            fs.copyFileSync(path.join(__dirname, 'grid-templates', target, chosenTemplate), path.join(idyllOutputPath, 'styles.css'));
+            fs.copyFileSync(path.join(__dirname, 'grid-templates', targetMap[target] || target, chosenTemplate), path.join(idyllOutputPath, 'styles.css'));
 
 
             //    3.3. Define grid placement for text, graphics, notes
@@ -221,7 +230,9 @@ class Gridyll {
                 }
                 if (target === 'video' && data.includes('Serving files from:')) {
                     console.log('\n\t🎙️ Recording audio...');
-                    const audioData = await getVideoAudioData(header, content);
+
+                    // console.log(JSON.stringify(normalizedContent));
+                    const audioData = await getVideoAudioData(header, normalizedContent);
 
                     // console.log('audioData', JSON.stringify(audioData, null, 2));
 
@@ -232,13 +243,16 @@ class Gridyll {
 
 
                     console.log('\t🎥 Recording video...');
-                    // console.log('slide timings', slideTiming);
+                    console.log('slide timings', slideTiming);
                     const puppeteer = require('puppeteer');
                     const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
                     // const { record } = require('puppeteer-recorder');
 
 
-                    const sourceFile = `input-video-11.mp4`;
+
+                    const sourceFileIdx = +process.env['SOURCE_INDEX'] || 30;
+                    const sourceFile = `input-video-${sourceFileIdx}.mp4`;
+                    const sourceCopy = `source-${sourceFile}`;
 
                     /**
                      * Need to do three things:
@@ -255,10 +269,13 @@ class Gridyll {
                      *          needs to be passed into the pupeteer recording.
                      */
 
-                    const sizeMultiplier = 0.5;
+                    const sizeMultiplier = 1.0;//0.5;
+
+                    const writeStream = fs.createWriteStream(sourceFile);
 
                     const browser = await puppeteer.launch({
-                        defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier }
+                        defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier },
+                        // headless: false
                     });
                     const page = await browser.newPage();
                     const recorder = new PuppeteerScreenRecorder(page, {
@@ -272,19 +289,39 @@ class Gridyll {
                         // fps: 60
                     });
 
+
+                    await recorder.startStream(writeStream); // video must have .mp4 has an extension.
+
+                    // await page.waitForTimeout(15000);
+                    // await delay(15000);
                     // page.on('pageerror', pageerr=> {
                     //     console.log('pageerror occurred: ', pageerr);
                     // })
                     // console.log(`http://localhost:${videoPort}?slideTiming=${slideTiming}`)
                     await page.setDefaultNavigationTimeout(0);
 
-                    const writeStream = fs.createWriteStream(sourceFile);
 
 
-                    await page.goto(`http://localhost:${videoPort}?slideTiming=100,${slideTiming}`);
+                    await page.goto(`http://localhost:${videoPort}?slideTiming=${slideTiming}`);
+
+                    // await page.waitForTimeout(15000);
+
+                    // await delay(15000);
                     const watchDog = page.waitForFunction('window.status === "ready"');
                     await watchDog;
+                    // await delay(15000);
+                    // await page.waitForTimeout(15000);
 
+
+                    // await page.evaluate((function() {
+                    //     setTimeout(() => {
+
+                    //     }, 15000);
+                    // }))
+
+
+                    const coverImagePath = 'title-screen.png';
+                    await page.screenshot({path: coverImagePath});
                     // await record({
                     //     browser: browser, // Optional: a puppeteer Browser instance,
                     //     page: page, // Optional: a puppeteer Page instance,
@@ -315,40 +352,99 @@ class Gridyll {
 
                     // await page.waitForTimeout(15000);
                     // await page.waitForTimeout(15000);
-                    await recorder.startStream(writeStream); // video must have .mp4 has an extension.
-                    await page.waitForTimeout(1000);
+
+                    // await delay(15000);
+                    // await page.waitForTimeout(30000);
 
 
-                    await page.evaluate(function() {
-                        window.startMovie();
-                    });
+                    // await page.evaluate(function() {
+                    //     window.startMovie();
+                    // });
+                    // const coverImagePath = 'title-screen.png';
+                    const ALL_IMAGES = true;
+
+                    for (var _slideIdx = 0; _slideIdx < audioData.length; _slideIdx++) {
+                        await page.evaluate((idx) => {
+                            window._setSlide(idx);
+                        }, _slideIdx);
+
+                        await page.waitForTimeout(5000);
+
+                        await page.screenshot({path: `slide-image-${_slideIdx}.png`});
+                    }
 
                     // console.log('waiting for timeout....', audioData.reduce((memo, { duration }) => {
                     //     return memo + pupeteerTimingMultiplier * duration;
                     // }, 0));
-                    await page.waitForTimeout(audioData.reduce((memo, { duration }) => {
+                    const _audioDuration = audioData.reduce((memo, { duration }) => {
                         return memo + pupeteerTimingMultiplier * duration;
-                    }, 0));
+                    }, 0);
+
+                    // await page.waitForTimeout(_audioDuration);
+                    // await page.waitForTimeout(audioData.reduce((memo, { duration }) => {
+                    //     return memo + pupeteerTimingMultiplier * duration;
+                    // }, 2500));
                     await recorder.stop();
                     await browser.close();
                     await writeStream.close();
                     console.log('\t🎥 Recording complete.');
 
                     console.log('\t🎬 Compositing video.');
+                    fs.copyFileSync(sourceFile, sourceCopy);
 
+                    const _audioDurationWithoutHeader = audioData.filter((_, i) => i > 0).reduce((memo, { duration }) => {
+                        return memo + pupeteerTimingMultiplier * duration;
+                    }, 0);
+                    const { getVideoDurationInSeconds } = require('get-video-duration');
+                    const _inputDuration = 1000 * (await  getVideoDurationInSeconds(sourceFile));
+                    const extraUpFront = _inputDuration - _audioDurationWithoutHeader;
+
+                    console.log('_inputDuration', _inputDuration);
+                    console.log('_audioDuration', _audioDurationWithoutHeader);
+                    console.log('extraUpFront', extraUpFront);
                     let audioOffset = 0;
+
+                    let clips;
+
+                    if (ALL_IMAGES) {
+                        clips = audioData.map((d, i) => {
+                            return {
+                                layers: [{
+                                    type: 'image',
+                                    path: `slide-image-${i}.png`,
+                                    transition: null,
+                                    zoomDirection: null
+                                }],
+                                duration: d.duration / 1000,
+                                transition: null
+                            }
+                        });
+                    } else if (extraUpFront < 0) {
+                        clips = [
+                            { layers: [{ type: 'image', path: coverImagePath, duration: audioData[0].duration / 1000 }] },
+                            { layers: [{ type: 'video', path: sourceCopy, cutFrom: (audioData[0].duration + extraUpFront) / 1000 }] },
+                        ]
+                    } else {
+                        clips = [
+                            { layers: [{ type: 'image', path: coverImagePath, duration: audioData[0].duration / 1000 }] },
+                            { layers: [{ type: 'video', path: sourceCopy, cutFrom: extraUpFront / 1000 }] }
+                        ]
+                    }
+
+                    console.log(JSON.stringify(clips))
 
                     const editlyOpts = {
                         // enableFfmpegLog: true,
-                        outPath: 'video-out.mp4',
+                        outPath: path.join(this.projectPath, 'output', 'data-video.mp4'),
                         width: 1280 * sizeMultiplier,
                         height: 720 * sizeMultiplier,
                         // defaults: {
                         //     layer: { fontPath: './assets/Patua_One/PatuaOne-Regular.ttf' },
                         // },
-                        clips: [
-                            { layers: [{ type: 'video', path: sourceFile, cutFrom: 1.1 }] }
-                        ],
+                        defaults: {
+                            transition: null,
+                        },
+                        clips: clips,
                         audioNorm: { enable: true, gaussSize: 3, maxGain: 100 },
                         clipsAudioVolume: 50,
                         audioTracks: audioData.map(({ filename, duration, text }) => {
@@ -387,7 +483,7 @@ class Gridyll {
             // console.log('target', target);
             if (!fs.pathExistsSync(path.join(this.projectPath, 'output', target))) {
                 console.log(`\tCreating target '${target}' at path ${path.join(this.projectPath, 'output', target)}`);
-                fs.copySync(path.join(__dirname, 'output', target), path.join(this.projectPath, 'output', target));
+                fs.copySync(path.join(__dirname, 'output', targetMap[target] || target), path.join(this.projectPath, 'output', target));
             }
         })
     }

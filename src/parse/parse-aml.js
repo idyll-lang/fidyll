@@ -26,7 +26,9 @@ module.exports = (text) => {
         SCENE_YML: 'SCENE_YML',
         PRE_STAGE: 'PRE_STAGE',
         STAGE_YML: 'STAGE_YML',
-        STAGE: 'STAGE'
+        STAGE: 'STAGE',
+        CONCLUSION: 'CONCLUSION',
+        CONCLUSION_YML: 'CONCLUSION_YML',
     }
 
     let currentState = states.PRE_SCENE;
@@ -125,10 +127,39 @@ module.exports = (text) => {
                     currentScene.stages.push(currentContent);
                     currentContent = null;
                     currentState = states.SCENE_YML;
+                } else if (line.trim().match(/\s*{conclusion}/g)) { // starting the conclusion
+                    currentScene.stages.push(currentContent);
+                    currentContent = null;
+                    currentState = states.CONCLUSION_YML;
                 } else {
                     currentContent.text += '\n' + line;
                 }
                 break;
+            case states.CONCLUSION_YML:
+                if (!currentContent) {
+                    currentContent = {
+                        type: 'conclusion',
+                        text: '',
+                        raw: ''
+                    }
+                }
+                if (!line.trim() || line.trim() === '{}' || !line.trim().match(/\:/g)) { // empty line, the yaml is over
+                    try {
+                        currentContent.parsed = flexibleParseYaml(currentContent.raw);
+                    } catch(e) {
+                        console.log('Error parsing stage YAML', e);
+                    }
+                    if((line.trim() || line.trim() !== '{}') && !line.trim().match(/\:/g)) {
+                        currentContent.text += '\n' + line;
+                    }
+                    currentState = states.CONCLUSION;
+                } else { // this is the yaml
+                    currentContent.raw += '\n' + line;
+                }
+                break;
+        case states.CONCLUSION:
+            currentContent.text += '\n' + line;
+            break;
         }
     })
 

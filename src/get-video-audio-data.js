@@ -3,7 +3,7 @@
 const util = require('util');
 const textToSpeech = require('@google-cloud/text-to-speech');
 const fs = require('fs-extra');
-const getMP3Duration = require('get-mp3-duration')
+const getMP3Duration = require('get-mp3-duration');
 
 function makeid(length) {
   var result           = '';
@@ -22,23 +22,22 @@ module.exports = async (header, content) => {
 
   let initialArray = [{ text: header.title }];
 
-  const voiceovers = content.reduce((memo, contentFragment) => {
-    if (contentFragment.type === 'scene') {
+  const voiceovers = content.scenes.reduce((memo, contentFragment) => {
+    memo.push({
+      text: ((contentFragment.forward || '') + ' ' + (contentFragment.text || '')).trim()
+    })
 
+    contentFragment.stages.forEach((stage, idx) => {
       memo.push({
-        text: ((contentFragment.forward || '') + ' ' + (contentFragment.text || '')).trim()
+        text: stage.text || ''
       })
-
-      contentFragment.stages.forEach((stage, idx) => {
-        memo.push({
-          text: stage.text || ''
-        })
-      })
-    }
-
+    })
     return memo;
   }, initialArray).map(({text}) => {
-    return { text: text.replace(/[\s\n]+/g, ' ').trim() };
+    return { text: text
+        .replace(/\_/g, ' ')
+        .replace(/[[^\/\\]+[\/\\]\]/g, '')
+        .replace(/[\s\n]+/g, ' ').trim() };
   }).filter(({ text }) => {
     return text !== ''
   });

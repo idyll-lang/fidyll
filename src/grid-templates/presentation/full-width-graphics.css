@@ -13,6 +13,19 @@
   margin: 150px 2em 2em 2em;
 }
 
+.control-details {
+  background: rgba(255, 255, 255, 0.67);
+  font-size: small;
+  padding: 0.5em;
+  border-radius: 5px;
+  cursor: pointer;
+  max-width: 250px;
+}
+
+.control-details[open] {
+  border: solid 1px #999;
+}
+
 .idyll-slide-graphic > div {
   display: flex;
   align-items: center;

@@ -47,8 +47,8 @@ module.exports = (header, content) => {
             value: paramToVar(param, sceneIdxVars)
           },
           value: {
-            type: 'value',
-            value: contentFragment.parsed.parameters[param]
+            type: Array.isArray(contentFragment.parsed.parameters[param]) ? 'expression' : 'value',
+            value: Array.isArray(contentFragment.parsed.parameters[param]) ? JSON.stringify(contentFragment.parsed.parameters[param]) : contentFragment.parsed.parameters[param]
           }
         }
       })
@@ -200,7 +200,7 @@ module.exports = (header, content) => {
             })
           }
         ]
-      }].concat(content.scenes.reduce((memo, contentFragment) => {
+      }].concat(content.scenes.reduce((memo, contentFragment, _sceneIdx) => {
         sceneIdxContentSlides++
         currentScene = contentFragment
         contentFragment.stages.forEach((stage, _stageIdx) => {
@@ -216,7 +216,7 @@ module.exports = (header, content) => {
                   ) : '')
               }
             },
-            children: (stage.parsed.summary || stage.summary || stage.text).trim().split(/\n\n+/).map(t => {
+            children: [...(stage.parsed.summary || stage.summary || stage.text).trim().split(/\n\n+/).map(t => {
               return {
                 id: id++,
                 type: 'component',
@@ -229,7 +229,136 @@ module.exports = (header, content) => {
                   }
                 ]
               }
-            })
+            }), (stage.parsed.controls ? {
+              id: id++,
+              type: 'component',
+              name: 'details',
+              properties: {
+                className: {
+                  type: 'value',
+                  value: 'control-details'
+                }
+              },
+              children: [{
+                id: id++,
+                type: 'component',
+                name: 'summary',
+                children: [{
+                  id: id++,
+                  type: 'textnode',
+                  value: "Controls"
+                }]
+              }, ...Object.keys(stage.parsed.controls || {}).map(k => {
+                const getControl = () => {
+                  const { freeform, range, set } = stage.parsed.controls[k];
+
+                  if (range) {
+                    if (range.length < 2) {
+                      console.error('Error: range provided with fewer than 2 parameters. Please provide a range like [min, max], or [min, max, step].');
+                    }
+                    if (!range.length > 2) {
+                      console.warn('Warning: range provided without set parameter');
+                    }
+
+                    return {
+                      id: id++,
+                      type: 'component',
+                      name: 'Range',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: paramToVar(k, _sceneIdx)
+                        },
+                        min: {
+                          type: 'value',
+                          value: +range[0]
+                        },
+                        max: {
+                          type: 'value',
+                          value: +range[1]
+                        },
+                        step: range.length > 2 ? {
+                          type: 'value',
+                          value: +range[2]
+                        } : undefined
+                      }
+                    }
+                  }
+                  else if (set) {
+                    let _set = new Set(set)
+                    if (_set.has(true) && _set.has(false) && _set.size === 2) {
+                      return {
+                        id: id++,
+                        type: 'component',
+                        name: 'Boolean',
+                        properties: {
+                          value: {
+                            type: 'variable',
+                            value: paramToVar(k, _sceneIdx)
+                          }
+                        }
+                      }
+                    }
+                    return {
+                      id: id++,
+                      type: 'component',
+                      name: 'Select',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: paramToVar(k, _sceneIdx)
+                        },
+                        options: {
+                          type: 'expression',
+                          value: JSON.stringify([...set.values()].map(v => { return { label: v, value: v} }))
+                        }
+                      }
+                    }
+                  }
+                  else if (freeform) {
+                    return {
+                      id: id++,
+                      type: 'component',
+                      name: 'TextInput',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: paramToVar(k, _sceneIdx)
+                        }
+                      }
+                    }
+                  }
+                  else {
+                    console.warn(`Could not identify control type for parameter ${k}`);
+                    return {
+                      id: id++,
+                      type: 'component',
+                      name: 'TextInput',
+                      properties: {
+                        value: {
+                          type: 'variable',
+                          value: paramToVar(k, _sceneIdx)
+                        }
+                      }
+                    }
+                  }
+                }
+
+                return {
+                  id: id++,
+                  type: 'component',
+                  name: 'div',
+                  children: [
+                    {
+                      id: id++,
+                      type: 'textnode',
+                      value: k.replace(/\_/g, ' ')
+                    },
+                    getControl()
+                  ]
+                }
+              })]
+            } : null)].filter(d => d)
         })
       })
 
@@ -462,6 +591,21 @@ module.exports = (header, content) => {
       ...varNodes,
       ...headerNodes,
       ...slideshowNodes,
+      {
+        id: id++,
+        type: 'component',
+        name: "VideoStepper",
+        properties: {
+          index: {
+            type: "variable",
+            value: "__slideshowIndex"
+          },
+          length: {
+            type: "variable",
+            value: sceneEndIndex
+          }
+        }
+      },
       {
         id: id++,
         type: 'component',
