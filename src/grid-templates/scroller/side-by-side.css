@@ -100,7 +100,8 @@ html {
         font-size: 10px;
     }
     .idyll-scroll  .idyll-text-container, .idyll-scroll-text .idyll-step {
-      grid-column: 1 / 5;
+      grid-column: 1 / 4;
+      z-index: 1;
     }
     .idyll-scroll  .idyll-scroll-graphic {
       grid-column: 1 / 5;
