@@ -4,7 +4,7 @@ Research project for cross-platform Idyll projects.
 
 **Note: this code is not very portable at the moment. It is not hosted on NPM and has several filepaths hard-coded. This will improve over time, but use at your own peril for now.**
 
-## Writing a Gridyll Articlee
+## Writing a Gridyll Article
 
 Gridyll articles are written using a modified version of ArchieML and use the .aml file extension. See the
 code snippet below for an example article:
