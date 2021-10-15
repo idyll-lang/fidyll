@@ -11,7 +11,7 @@ html {
   }
 
   h1.hed {
-    max-width: 500px;
+    max-width: 800px;
     margin: 0 auto;
   }
 
@@ -90,8 +90,19 @@ html {
      .idyll-root {
         grid-template-columns:  auto 15rem 15rem auto;
     }
-
+    .idyll-text-container {
+      grid-column: 1 / 5;
+    }
+    h1.hed {
+      max-width: 100%;
+    }
     html {
         font-size: 10px;
+    }
+    .idyll-scroll  .idyll-text-container, .idyll-scroll-text .idyll-step {
+      grid-column: 1 / 5;
+    }
+    .idyll-scroll  .idyll-scroll-graphic {
+      grid-column: 1 / 5;
     }
   }
