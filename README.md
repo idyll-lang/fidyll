@@ -2,7 +2,19 @@
 
 Research project for cross-platform Idyll projects.
 
-**Note: this code is not very portable at the moment. It is not hosted on NPM and has several filepaths hard-coded. This will improve over time, but use at your own peril for now.**
+**Note: This code is not yet hosted on NPM. Use at your own peril for now.**
+
+## Installation
+
+Clone this repo, run `npm install`, `npm link`.
+
+You should now have access to the `gridyll` and `gridyll deploy` commands.
+
+## Usage
+
+To render an article, `gridyll index.aml`. If you are creating a video, You also need to set the credentials to a Google Cloud account (e.g. `export GOOGLE_APPLICATION_CREDENTIALS="/Users/mathisonian/Documents/google-cloud.json"`). You may need to specify the path to FFMPEG, in that case run the command like: `FFMPEG_PATH=path/to/ffmpeg gridyll index.aml`.
+
+Once you are happy with the output, use the deploy script to generat static web output `gridyll-deploy output/`. This will create a folder called `deploy/`. You can upload the contents of this folder to any static web hosting service.
 
 ## Writing a Gridyll Article
 
@@ -124,17 +136,4 @@ only:false
 If the only keyword is set to true, then only this scene will be rendered.
 
 ```
-
-
-## Installation
-
-Clone this repo, run `npm install`, `npm link`.
-
-You should now have access to the `gridyll` and `gridyll deploy` commands.
-
-## Usage
-
-To render an article, `gridyll index.aml`.
-
-Once you are happy with the output, use the deploy script to generat static web output `gridyll-deploy output/`. This will create a folder called `deploy/`. You can upload the contents of this folder to any static web hosting service.
 

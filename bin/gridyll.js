@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#! /usr/bin/env node --trace-warnings
 
 const updateNotifier = require('update-notifier');
 const pkg = require('../package.json');

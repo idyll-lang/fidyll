@@ -37,8 +37,6 @@ module.exports = (content, target) => {
   let scenes = content.filter(d => d.type === "scene" && isInTarget(d) && !isSkipped(d));
   let conclusion = content.filter(d => d.type === "conclusion" && isInTarget(d));
 
-
-  console.log('conclusion', conclusion);
   if (scenes.some(d => isSoloed(d))) {
     scenes = scenes.filter(d => isSoloed(d));
   }

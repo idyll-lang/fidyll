@@ -59,7 +59,6 @@ module.exports = (header, content) => {
               value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
             },
             value: {
-              type: 'value',
               type: Array.isArray(stage.parsed.parameters[param]) ? 'expression' : 'value',
               value: Array.isArray(stage.parsed.parameters[param]) ? JSON.stringify(stage.parsed.parameters[param]) : stage.parsed.parameters[param]
             }
@@ -72,12 +71,19 @@ module.exports = (header, content) => {
   }, []);
 
   const appendices = content.scenes.map((contentFragment, i) => {
-    const appendixProps = contentFragment.parsed.appendix || contentFragment.parsed.controls || {};
+
+    const sceneControls = contentFragment.parsed.controls || contentFragment.stages.reduce((memo, stage) => {
+      if (stage.controls) {
+        return { ...stage.controls, ...memo };
+      }
+      return memo;
+    }, {})
+    const appendixProps = contentFragment.parsed.appendix || sceneControls || {};
 
     const sceneProps = Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
       memo[param] = {
-        type: 'value',
-        value: contentFragment.parsed.parameters[param]
+        type: Array.isArray(contentFragment.parsed.parameters[param]) ? 'expression' : 'value',
+        value: Array.isArray(contentFragment.parsed.parameters[param]) ? JSON.stringify(contentFragment.parsed.parameters[param]) : contentFragment.parsed.parameters[param]
       }
       return memo;
     }, {

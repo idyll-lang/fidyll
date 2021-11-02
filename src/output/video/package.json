@@ -18,7 +18,8 @@
     "d3-selection": "^2.0.0",
     "d3-transition": "^2.0.0",
     "idyll": "^5.7.1",
-    "idyll-d3-component": "^2.0.0"
+    "idyll-d3-component": "^2.0.0",
+    "little-loader": "^0.2.0"
   },
   "devDependencies": {
     "gh-pages": "^0.12.0"

@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "@google-cloud/text-to-speech": "^3.2.5",
+    "aperture": "^6.0.1",
     "archieml": "^0.4.2",
     "editly": "^0.11.1",
     "fast-copy": "^2.1.1",
@@ -28,6 +29,7 @@
     "openai-api": "^1.2.5",
     "puppeteer": "^10.0.0",
     "puppeteer-recorder": "^1.0.7",
-    "puppeteer-screen-recorder": "^2.0.2"
+    "puppeteer-screen-recorder": "^2.0.2",
+    "record-screen": "^3.19.0"
   }
 }

@@ -17,7 +17,6 @@ module.exports = (header, content) => {
 
 
   const { data, ...headerProps } = header;
-  console.log('header', header);
 
   const metaNodes = [{
     id: id++,
@@ -35,7 +34,6 @@ module.exports = (header, content) => {
     }
   }];
 
-  console.log(headerProps);
   const headerNodes = [
     {
       id: id++,
@@ -134,15 +132,38 @@ module.exports = (header, content) => {
 
     sceneIdxContent++;
     currentScene = contentFragment.parsed;
+    const scrollerOpts = currentScene.scroller || {};
     return {
       id: id++,
       type: 'component',
       name: 'Scroller',
+      properties: {
+        className: {
+          type: 'value',
+          value: `${(scrollerOpts.layout && scrollerOpts.layout === 'fullwidth') ? 'full-width' : ''} ${scrollerOpts.graphicAnchor && scrollerOpts.graphicAnchor !== 'middle' ? `graphic-anchor-${scrollerOpts.graphicAnchor}` : ''}`
+        }
+      },
       children: [
         {
           id: id++,
           type: 'component',
           name: 'Graphic',
+          properties: {
+            displayParameters: {
+              type: 'value',
+              value: contentFragment.parsed.parameters.displayParameters === undefined ? true : contentFragment.parsed.parameters.displayParameters
+            },
+            ...Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
+              if (param === 'data' && header.data) {
+                console.warn('Warning: overwriting built in data parameter');
+              }
+              memo[param] = {
+                type: 'variable',
+                value: paramToVar(param, sceneIdxContent-1)
+              }
+              return memo;
+            }, {})
+          },
           children: [
             {
               id: id++,
@@ -317,7 +338,7 @@ module.exports = (header, content) => {
 
               ]
             }
-          }), {
+          }), Object.keys(stage.parsed.controls || {}).length ? {
             id: id++,
             type: 'component',
             name: 'div',
@@ -430,14 +451,19 @@ module.exports = (header, content) => {
                 children: [
                   {
                     id: id++,
-                    type: 'textnode',
-                    value: k.replace(/_/g, ''),
+                    type: 'component',
+                    name: 'div',
+                    children: [{
+                      id: id++,
+                      type: 'textnode',
+                      value: k.replace(/_/g, '')
+                    }]
                   },
                   _control
                 ]
               }
             })
-          }]
+          } : null].filter(d => d)
         }
       }))
     }

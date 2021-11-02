@@ -90,7 +90,11 @@ module.exports = (text) => {
                     parsedContent.push(currentContent);
                     currentContent = null;
                     currentState = states.STAGE_YML;
-                } else if (line.trim()) {
+                } else if (line.trim().match(/\s*{scene}/g)) {
+                    parsedContent.push(currentContent);
+                    currentContent = null;
+                    currentState = states.SCENE_YML;
+                } else {
                     currentContent.foreward += '\n' + line;
                 }
                 break;

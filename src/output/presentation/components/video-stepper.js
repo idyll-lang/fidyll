@@ -5,6 +5,12 @@ class VideoStepper extends React.Component {
   componentDidMount() {
     window.status = "ready";
 
+    window._setSlide = (_slideIndex) => {
+      this.props.updateProps({
+        index: _slideIndex
+      });
+    }
+
     window.startMovie = () => {
       console.log('stepper did mount', this.props.index, this.props.length);
       const urlSearchParams = new URLSearchParams(window.location.search);

@@ -20,6 +20,8 @@ const path = require('path');
 const editly = require('editly');
 const copy = require('fast-copy');
 
+const { tmpdir } = require('os');
+
 const { exec, spawn } = require('child_process');
 
 const parseGridyllInput = require('./parse/parse-aml');
@@ -177,7 +179,7 @@ class Gridyll {
                 console.warn('No static files found...');
             }
 
-            const _idyll = spawn(`cd ${idyllOutputPath} && idyll --compileLibs=true --ssr=false --port ${3000 + i}`, {
+            const _idyll = spawn(`cd ${idyllOutputPath} && idyll --ssr=false --port ${3000 + i}`, {
                 shell: true
             });
 
@@ -198,7 +200,22 @@ class Gridyll {
                     const page = await browser.newPage();
                     await page.setDefaultNavigationTimeout(0);
 
+
                     await page.goto(`http://localhost:${staticPort}`);
+
+                    await page.addStyleTag({content: `
+                        .gridyll-control-container {
+                            display: none;
+                        }
+
+                        img {
+                            max-width: 100%;
+                            max-height: 100%;
+                            width: 100%;
+                            margin: 6em auto 2em auto;
+                        }
+                    `})
+
 
                     const graphics = await page.$$('div.idyll-graphic');
                     await captureScreenshotsOfElements(graphics, 'static-graphic');
@@ -219,6 +236,8 @@ class Gridyll {
                             element.innerHTML = `<img style="max-width: 100%;" src="${_staticOutputPath}/static-appendix-${_i}.png" />`;
                         })
                     }, _staticOutputPath);
+
+
                     const allHtml = await page.evaluate(() => document.querySelector('*').outerHTML);
                     const _htmlOutputPath = path.join(this.projectPath, 'output', target, 'build', 'static.html');
                     fs.writeFileSync(_htmlOutputPath, allHtml);
@@ -231,7 +250,7 @@ class Gridyll {
                 if (target === 'video' && data.includes('Serving files from:')) {
                     console.log('\n\t🎙️ Recording audio...');
 
-                    // console.log(JSON.stringify(normalizedContent));
+
                     const audioData = await getVideoAudioData(header, normalizedContent);
 
                     // console.log('audioData', JSON.stringify(audioData, null, 2));
@@ -245,14 +264,28 @@ class Gridyll {
                     console.log('\t🎥 Recording video...');
                     console.log('slide timings', slideTiming);
                     const puppeteer = require('puppeteer');
+
+
+                    const sizeMultiplier = 1.0;//0.5;
+                    const aperture = require('aperture');
+
+                    const apertureOptions = {
+                        fps: 30,
+                        cropArea: {
+                            x: 0,
+                            y: 0,
+                            width: 1280 * sizeMultiplier,
+                            height: 720 * sizeMultiplier
+                        }
+                    };
                     const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
                     // const { record } = require('puppeteer-recorder');
 
 
 
                     const sourceFileIdx = +process.env['SOURCE_INDEX'] || 30;
-                    const sourceFile = `input-video-${sourceFileIdx}.mp4`;
-                    const sourceCopy = `source-${sourceFile}`;
+                    const sourceFile = path.join(tmpdir(), `input-video-${sourceFileIdx}.mp4`);
+                    const sourceCopy = path.join(tmpdir(), `source-input-video-${sourceFileIdx}.mp4}`);
 
                     /**
                      * Need to do three things:
@@ -269,28 +302,30 @@ class Gridyll {
                      *          needs to be passed into the pupeteer recording.
                      */
 
-                    const sizeMultiplier = 1.0;//0.5;
 
-                    const writeStream = fs.createWriteStream(sourceFile);
+                    // const writeStream = fs.createWriteStream(sourceFile);
 
                     const browser = await puppeteer.launch({
-                        defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier },
-                        // headless: false
+                        // defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier },
+                        headless: false,
+                        args: ['--app', "--window-position=0,60", '--disable-infobars', `--window-size=${1280 * sizeMultiplier},${720 * sizeMultiplier + 123}`]
                     });
                     const page = await browser.newPage();
-                    const recorder = new PuppeteerScreenRecorder(page, {
-                        // ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
-                        ffmpeg_Path: '/usr/local/bin/ffmpeg',
-                        videoFrame: {
-                            width: 1280 * sizeMultiplier,
-                            height: 720 * sizeMultiplier,
-                        },
-                        aspectRatio: '16:9',
-                        // fps: 60
-                    });
+                    await page._client.send('Emulation.clearDeviceMetricsOverride')
+
+                    // const recorder = new PuppeteerScreenRecorder(page, {
+                    //     // ffmpeg_Path: '/opt/homebrew/bin/ffmpeg',
+                    //     ffmpeg_Path: process.env.FFMPEG_PATH || '/usr/local/bin/ffmpeg',
+                    //     videoFrame: {
+                    //         width: 1280 * sizeMultiplier,
+                    //         height: 720 * sizeMultiplier,
+                    //     },
+                    //     aspectRatio: '16:9',
+                    //     // fps: 60
+                    // });
 
 
-                    await recorder.startStream(writeStream); // video must have .mp4 has an extension.
+                    // await recorder.startStream(writeStream); // video must have .mp4 has an extension.
 
                     // await page.waitForTimeout(15000);
                     // await delay(15000);
@@ -319,9 +354,12 @@ class Gridyll {
                     //     }, 15000);
                     // }))
 
+                    const recorder = aperture();
+                    await recorder.startRecording(apertureOptions);
+                    await recorder.isFileReady;
 
-                    const coverImagePath = 'title-screen.png';
-                    await page.screenshot({path: coverImagePath});
+                    // const coverImagePath = path.join(tmpdir(), 'title-screen.png');
+                    // await page.screenshot({path: coverImagePath});
                     // await record({
                     //     browser: browser, // Optional: a puppeteer Browser instance,
                     //     page: page, // Optional: a puppeteer Page instance,
@@ -357,21 +395,21 @@ class Gridyll {
                     // await page.waitForTimeout(30000);
 
 
-                    // await page.evaluate(function() {
-                    //     window.startMovie();
-                    // });
+                    await page.evaluate(function() {
+                        window.startMovie();
+                    });
                     // const coverImagePath = 'title-screen.png';
-                    const ALL_IMAGES = true;
+                    const ALL_IMAGES = false;
 
-                    for (var _slideIdx = 0; _slideIdx < audioData.length; _slideIdx++) {
-                        await page.evaluate((idx) => {
-                            window._setSlide(idx);
-                        }, _slideIdx);
+                    // for (var _slideIdx = 0; _slideIdx < audioData.length; _slideIdx++) {
+                    //     await page.evaluate((idx) => {
+                    //         window._setSlide(idx);
+                    //     }, _slideIdx);
 
-                        await page.waitForTimeout(5000);
+                    //     // await page.waitForTimeout(5000);
 
-                        await page.screenshot({path: `slide-image-${_slideIdx}.png`});
-                    }
+                    //     // await page.screenshot({path: path.join(tmpdir(), `slide-image-${_slideIdx}.png`)});
+                    // }
 
                     // console.log('waiting for timeout....', audioData.reduce((memo, { duration }) => {
                     //     return memo + pupeteerTimingMultiplier * duration;
@@ -380,58 +418,60 @@ class Gridyll {
                         return memo + pupeteerTimingMultiplier * duration;
                     }, 0);
 
-                    // await page.waitForTimeout(_audioDuration);
+                    await page.waitForTimeout(_audioDuration);
                     // await page.waitForTimeout(audioData.reduce((memo, { duration }) => {
                     //     return memo + pupeteerTimingMultiplier * duration;
                     // }, 2500));
-                    await recorder.stop();
+                    // await recorder.stop();
+                    const _apertureFile = await recorder.stopRecording();
                     await browser.close();
-                    await writeStream.close();
+                    // await writeStream.close();
                     console.log('\t🎥 Recording complete.');
 
                     console.log('\t🎬 Compositing video.');
-                    fs.copyFileSync(sourceFile, sourceCopy);
+                    fs.copyFileSync(_apertureFile, sourceCopy);
 
                     const _audioDurationWithoutHeader = audioData.filter((_, i) => i > 0).reduce((memo, { duration }) => {
                         return memo + pupeteerTimingMultiplier * duration;
                     }, 0);
                     const { getVideoDurationInSeconds } = require('get-video-duration');
-                    const _inputDuration = 1000 * (await  getVideoDurationInSeconds(sourceFile));
+                    const _inputDuration = 1000 * (await  getVideoDurationInSeconds(sourceCopy));
                     const extraUpFront = _inputDuration - _audioDurationWithoutHeader;
 
-                    console.log('_inputDuration', _inputDuration);
-                    console.log('_audioDuration', _audioDurationWithoutHeader);
-                    console.log('extraUpFront', extraUpFront);
+                    // console.log('_inputDuration', _inputDuration);
+                    // console.log('_audioDuration', _audioDurationWithoutHeader);
+                    // console.log('extraUpFront', extraUpFront);
                     let audioOffset = 0;
 
                     let clips;
 
-                    if (ALL_IMAGES) {
-                        clips = audioData.map((d, i) => {
-                            return {
-                                layers: [{
-                                    type: 'image',
-                                    path: `slide-image-${i}.png`,
-                                    transition: null,
-                                    zoomDirection: null
-                                }],
-                                duration: d.duration / 1000,
-                                transition: null
-                            }
-                        });
-                    } else if (extraUpFront < 0) {
+                    // if (ALL_IMAGES) {
+                    //     clips = audioData.map((d, i) => {
+                    //         return {
+                    //             layers: [{
+                    //                 type: 'image',
+                    //                 path: path.join(tmpdir(), `slide-image-${i}.png`),
+                    //                 transition: null,
+                    //                 zoomDirection: null
+                    //             }],
+                    //             duration: d.duration / 1000,
+                    //             transition: null
+                    //         }
+                    //     });
+                    // } else if (extraUpFront < 0) {
+                    //     clips = [
+                    //         { layers: [{ type: 'image', path: coverImagePath, duration: audioData[0].duration / 1000 }] },
+                    //         { layers: [{ type: 'video', path: sourceCopy, cutFrom: (audioData[0].duration + extraUpFront) / 1000 }] },
+                    //     ]
+                    // } else {
                         clips = [
-                            { layers: [{ type: 'image', path: coverImagePath, duration: audioData[0].duration / 1000 }] },
-                            { layers: [{ type: 'video', path: sourceCopy, cutFrom: (audioData[0].duration + extraUpFront) / 1000 }] },
+                            // { layers: [{ type: 'image', path: coverImagePath, duration: audioData[0].duration / 1000 }] },
+                            // { layers: [{ type: 'video', path: sourceCopy, cutFrom: extraUpFront / 1000 }] }
+                            { layers: [{ type: 'video', path: sourceCopy }] }
                         ]
-                    } else {
-                        clips = [
-                            { layers: [{ type: 'image', path: coverImagePath, duration: audioData[0].duration / 1000 }] },
-                            { layers: [{ type: 'video', path: sourceCopy, cutFrom: extraUpFront / 1000 }] }
-                        ]
-                    }
+                    // }
 
-                    console.log(JSON.stringify(clips))
+                    // console.log(JSON.stringify(clips))
 
                     const editlyOpts = {
                         // enableFfmpegLog: true,
@@ -466,6 +506,34 @@ class Gridyll {
                     await editly(editlyOpts).catch(console.error);
 
                     console.log('\t🎬 Compositing complete.\n');
+
+                    console.log('\t📇 Creating subtitles.\n');
+
+                    const millisecondsToSRT = (ms) => {
+                        const hours = Math.floor(ms / 1000 / 60 / 60);
+                        ms = ms - hours * 60 * 60 * 1000;
+                        const minutes = Math.floor(ms / 1000 / 60);
+                        ms = ms - minutes * 60 * 1000;
+                        const seconds = Math.floor(ms / 1000);
+                        ms = Math.floor(ms - seconds * 1000);
+
+                        return `${hours}:${minutes}:${seconds},${ms}`;
+                    }
+
+                    let subtitleOffset = 0;
+                    const subtitleString = audioData.map(({ filename, duration, text }, subtitleIndex) => {
+                        const ret =  `${subtitleIndex+1}
+                        ${millisecondsToSRT(subtitleOffset)} --> ${millisecondsToSRT(subtitleOffset + duration)}
+                        ${text.split('.').join('.\n')}`;
+
+                        subtitleOffset += duration;
+                        return ret;
+                    }).join('\n').split('\n').map(str => str.trim()).join('\n');
+
+                    fs.writeFileSync(path.join(this.projectPath, 'output', 'data-video.srt'), subtitleString);
+
+
+                    console.log('\t📇 Subtitles complete.\n');
                 }
             });
 
@@ -484,6 +552,11 @@ class Gridyll {
             if (!fs.pathExistsSync(path.join(this.projectPath, 'output', target))) {
                 console.log(`\tCreating target '${target}' at path ${path.join(this.projectPath, 'output', target)}`);
                 fs.copySync(path.join(__dirname, 'output', targetMap[target] || target), path.join(this.projectPath, 'output', target));
+
+                console.log('\tInstalling dependencies with npm....');
+                spawn(`cd ${path.join(this.projectPath, 'output', target)} && npm install`, {
+                    shell: true
+                });
             }
         })
     }
