@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "bin": {
-    "gridyll": "./bin/gridyll.js",
-    "gridyll-deploy": "./bin/gridyll-deploy.js"
+    "fidyll": "./bin/gridyll.js",
+    "fidyll-deploy": "./bin/gridyll-deploy.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
