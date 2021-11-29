@@ -1,4 +1,4 @@
-# Gridyll
+# Fidyll
 
 Research project for cross-platform Idyll projects.
 
@@ -8,17 +8,17 @@ Research project for cross-platform Idyll projects.
 
 Clone this repo, run `npm install`, `npm link`.
 
-You should now have access to the `gridyll` and `gridyll deploy` commands.
+You should now have access to the `fidyll` and `fidyll deploy` commands.
 
 ## Usage
 
-To render an article, `gridyll index.aml`. If you are creating a video, You also need to set the credentials to a Google Cloud account (e.g. `export GOOGLE_APPLICATION_CREDENTIALS="/Users/mathisonian/Documents/google-cloud.json"`). You may need to specify the path to FFMPEG, in that case run the command like: `FFMPEG_PATH=path/to/ffmpeg gridyll index.aml`.
+To render an article, `fidyll index.aml`. If you are creating a video, You also need to set the credentials to a Google Cloud account (e.g. `export GOOGLE_APPLICATION_CREDENTIALS="/Users/mathisonian/Documents/google-cloud.json"`). You may need to specify the path to FFMPEG, in that case run the command like: `FFMPEG_PATH=path/to/ffmpeg fidyll index.aml`.
 
-Once you are happy with the output, use the deploy script to generat static web output `gridyll-deploy output/`. This will create a folder called `deploy/`. You can upload the contents of this folder to any static web hosting service.
+Once you are happy with the output, use the deploy script to generat static web output `fidyll-deploy output/`. This will create a folder called `deploy/`. You can upload the contents of this folder to any static web hosting service.
 
-## Writing a Gridyll Article
+## Writing a Fidyll Article
 
-Gridyll articles are written using a modified version of ArchieML and use the .aml file extension. See the
+Fidyll articles are written using a modified version of ArchieML and use the .aml file extension. See the
 code snippet below for an example article:
 
 ```aml
