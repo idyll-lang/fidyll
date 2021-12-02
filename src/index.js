@@ -20,6 +20,10 @@ const path = require('path');
 const editly = require('editly');
 const copy = require('fast-copy');
 
+const escapeShell = (cmd)=> {
+return '"'+cmd.replace(/&/g, '\\&').replace(/(["'$`\\])/g,'\\$1')+'"';
+};
+
 const { tmpdir } = require('os');
 
 const { exec, spawn } = require('child_process');
@@ -29,6 +33,7 @@ const serializeIdyll = require('./serialize-idyll');
 const getVideoAudioData = require('./get-video-audio-data');
 const normalize = require('./normalize-data');
 const handleScripts = require('./handle-scripts');
+const generateGifMap = require('./generate-gif-map');
 
 function delay(time) {
     return new Promise(function(resolve) {
@@ -81,7 +86,7 @@ class Gridyll {
         writeMetadata();
 
         // 3. For each target
-        targets.forEach((target, i) => {
+        targets.forEach(async (target, i) => {
 
 
             const idyllPath = path.join(this.projectPath, 'output', target, 'index.idyll');
@@ -95,12 +100,17 @@ class Gridyll {
 
             console.log(`Serializing markup for target ${target}`);
             let normalizedContent = normalize(copy(content), target);
+
             normalizedContent = handleScripts(normalizedContent, target, staticInputPath);
 
+            let gifMap = {};
+            if (target === 'static') {
+                gifMap = await generateGifMap(normalizedContent, staticOutputPath);
+            }
             // console.log(JSON.stringify(normalizedContent, null, 2));
 
             //    3.1. Serialize Idyll markup
-            const outputText = serializeIdyll(target, idyllHeader, normalizedContent);
+            const outputText = serializeIdyll(target, idyllHeader, normalizedContent, gifMap);
 
 
 
@@ -111,7 +121,12 @@ class Gridyll {
                 const _outputPath = path.join(this.projectPath, 'output', target, 'build', 'static');
                 let _i = 0;
                 for (const element of elements) {
-                    await element.screenshot({ path: `${_outputPath}/${pathPrefix}-${_i}.png` });
+                    try {
+                        await element.screenshot({ path: `${_outputPath}/${pathPrefix}-${_i}.png` });
+                    } catch(e) {
+                        console.log('error in screenshot');
+                        console.log(pathPrefix, _i);
+                    }
                     _i += 1;
                 }
             };
@@ -192,7 +207,7 @@ class Gridyll {
                     console.log('Producing static PDF...');
                     const puppeteer = require('puppeteer');
 
-                    const sizeMultiplier = 1.0;
+                    const sizeMultiplier = 4.0;
 
                     const browser = await puppeteer.launch({
                         defaultViewport: { width: 1280 * sizeMultiplier, height: 720 * sizeMultiplier }
@@ -208,20 +223,39 @@ class Gridyll {
                             display: none;
                         }
 
+                        .article-header {
+                            display: none;
+                        }
+
+                        h1.hed {
+                            display: none;
+                        }
+                        .byline {
+                            display: none;
+                        }
+
+                        .fidyll-appendix {
+                            display: block;
+                        }
+
                         img {
                             max-width: 100%;
                             max-height: 100%;
                             width: 100%;
-                            margin: 6em auto 2em auto;
+                            margin: 2em auto 2em auto;
                         }
                     `})
 
+                    await page.waitForTimeout(30000);
 
-                    const graphics = await page.$$('div.idyll-graphic');
+                    const graphics = await page.$$(':not(.fidyll-appendix) div.idyll-graphic');
+                    console.log('graphics');
                     await captureScreenshotsOfElements(graphics, 'static-graphic');
 
 
+
                     const appendices = await page.$$('div.appendix-graphic-plex');
+                    console.log('appendices');
                     await captureScreenshotsOfElements(appendices, 'static-appendix');
 
                     // replace the resulting HTML...
@@ -237,14 +271,39 @@ class Gridyll {
                         })
                     }, _staticOutputPath);
 
+                    await page.$$eval('.article-header', (elements, _staticOutputPath) => {
+                        elements.forEach((element, _i) => {
+                            element.outerHTML = '';
+                        })
+                    }, _staticOutputPath);
+
+
+
 
                     const allHtml = await page.evaluate(() => document.querySelector('*').outerHTML);
                     const _htmlOutputPath = path.join(this.projectPath, 'output', target, 'build', 'static.html');
                     fs.writeFileSync(_htmlOutputPath, allHtml);
 
-                    console.log('Running pandoc conversion...');
-                    spawn(`pandoc ${_htmlOutputPath} -s -o ${path.join(this.projectPath, 'output', 'static-output.pdf')}`, {
+                    const { data, targets, authorLink, ...headerFields } = idyllHeader;
+
+                    const _pandoc = spawn(`pandoc ${Object.keys(headerFields).map(k => `-M ${k}=${escapeShell(headerFields[k])}`).join(' ')} --latex-engine=xelatex ${_htmlOutputPath} -s -o ${path.join(this.projectPath, 'output', 'static-output.pdf')}`, {
                         shell: true
+                    });
+
+                    _pandoc.stdout.on('data', (data) => {
+                        console.log(`[pandoc stdout]: ${data}`);
+                    });
+
+                    _pandoc.stderr.on('data', (data) => {
+                        console.error(`[pandoc stderr]: ${data}`);
+                    });
+
+                    _pandoc.on('close', (code) => {
+                        if (code === 0) {
+                            console.log(`PDF generation completed.`);
+                            return;
+                        }
+                        console.log(`Pandoc exited with code ${code}`);
                     });
                 }
                 if (target === 'video' && data.includes('Serving files from:')) {
@@ -262,7 +321,7 @@ class Gridyll {
 
 
                     console.log('\t🎥 Recording video...');
-                    console.log('slide timings', slideTiming);
+
                     const puppeteer = require('puppeteer');
 
 
@@ -275,7 +334,7 @@ class Gridyll {
                             x: 0,
                             y: 0,
                             width: 1280 * sizeMultiplier,
-                            height: 720 * sizeMultiplier
+                            height: 720 * sizeMultiplier - 15
                         }
                     };
                     const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
@@ -521,14 +580,31 @@ class Gridyll {
                     }
 
                     let subtitleOffset = 0;
-                    const subtitleString = audioData.map(({ filename, duration, text }, subtitleIndex) => {
-                        const ret =  `${subtitleIndex+1}
-                        ${millisecondsToSRT(subtitleOffset)} --> ${millisecondsToSRT(subtitleOffset + duration)}
-                        ${text.split('.').join('.\n')}`;
+                    let subtitleIndex = 0;
+                    const subtitleString = audioData.map(({ filename, duration, text }) => {
 
-                        subtitleOffset += duration;
-                        return ret;
-                    }).join('\n').split('\n').map(str => str.trim()).join('\n');
+                        const sentences = text.replace(/([.?!])\s*(?=[A-Z])/g, "$1|").split("|");
+                        const totalCharacters = sentences.reduce((memo, str) => {
+                            return memo + str.length;
+                        }, 0);
+
+                        const charToDuration = (charlen) => charlen * duration / totalCharacters;
+
+                        const output = sentences.map((sentence, _sentenceIndex) => {
+
+                            const _duration = charToDuration(sentence.length);
+
+                            const ret =  `${++subtitleIndex}
+                            ${millisecondsToSRT(subtitleOffset)} --> ${millisecondsToSRT(subtitleOffset + _duration)}
+                            ${sentence}`;
+
+                            subtitleOffset += _duration;
+
+                            return ret.trim();
+                        }).join('\n\n');
+
+                        return output;
+                    }).join('\n\n').split('\n').map(str => str.trim()).join('\n');
 
                     fs.writeFileSync(path.join(this.projectPath, 'output', 'data-video.srt'), subtitleString);
 

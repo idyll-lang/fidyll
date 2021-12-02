@@ -1,26 +1,54 @@
 
 
+body, html {
+  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  font-family: system-ui;
+}
+
+
   html {
     font-size: 16px;
   }
 
   .idyll-root, .idyll-scroll {
     display: grid;
-    grid-template-columns:  1fr 20rem 20rem 1fr;
-    gap: 0 1em;
+    grid-template-columns:  repeat(12, 1fr);
+    gap: 0;
   }
+
+  .byline {
+    font-size: 18px;
+    margin-top: 9px;
+  }
+
+
 
   .idyll-graphic {
     text-align: left;
   }
 
+  .idyll-scroll-graphic .idyll-graphic img {
+    max-height: 80vh;
+  }
+
+  .idyll-graphic details {
+    position: absolute;
+  }
+
   h1.hed {
-    max-width: 800px;
+    max-width: 450px;
     margin: 0 auto;
+    font-size: 36px;
+    line-height: 45px;
+  }
+
+  h2.dek {
+    font-size: 27px;
+    line-height: 36px;
   }
 
   .idyll-root > div:not(.article-header):not(.idyll-text-container) {
-    grid-column: 1 / 5;
+    grid-column: 1 / 13;
     margin: 0 auto;
     /* background-color: #efefef; */
     width: 100%;
@@ -37,41 +65,51 @@
   }
 
   .article-header {
-    grid-column: 1 / 5;
+    grid-column: 1 / 13;
   }
 
   .idyll-text-container {
-    grid-column: 2 / 4;
+    grid-column: 5 / 9;
   }
 
   .idyll-scroll {
     display: grid;
-    grid-template-columns:  1fr 1fr 1fr 1fr;
+    grid-template-columns:  repeat(12, 1fr);
     max-width: 1280px;
     margin: 0 auto;
   }
 
   .idyll-scroll.full-width  .idyll-text-container, .idyll-scroll-text .idyll-step {
-    grid-column: 2 / 4;
+    grid-column: 5 / 9;
     width: 100%;
     max-width: 100%;
     z-index: 1;
   }
   .idyll-scroll  .idyll-text-container, .idyll-scroll-text .idyll-step {
-    grid-column: 1 / 3;
+    grid-column: 1 / 5;
     width: 100%;
     max-width: 100%;
   }
 
 
+  .control-details {
+    background: rgba(255, 255, 255, 0.67);
+    font-size: small;
+    padding: 0.5em;
+    border-radius: 5px;
+    cursor: pointer;
+    max-width: 250px;
+  }
+
+
   .idyll-scroll  .idyll-scroll-graphic {
-    grid-column: 3 / 5;
+    grid-column: 6 / 13;
     z-index: auto !important;
   }
 
 
   .idyll-scroll.full-width  .idyll-scroll-graphic {
-    grid-column: 1 / 5;
+    grid-column: 1 / 13;
   }
   .idyll-scroll  .idyll-scroll-graphic > div {
     width: auto !important;
@@ -98,22 +136,27 @@
     border: solid 1px #ddd;
     box-shadow: #ddd 2px 2px 3px;
     border-radius: 5px;
-    padding: 20px 25px;
-    font-size: 20px;
-    line-height: 1.5;
+    padding: 9px 9px;
+    font-size: 18px;
+    line-height: 27px;
     font-weight: 300;
     color: #333;
+    position: relative;
   }
 
   p {
-    font-size: 20px;
-    line-height: 1.3;
+    font-size: 18px;
+    line-height: 27px;
     font-weight: 300;
-    margin-bottom: 2em;
+    margin-bottom: 18px;
   }
 
   .idyll-scroll-text .idyll-step p {
-    margin-bottom: 1em;
+    margin-bottom: 0;
+  }
+
+  .idyll-scroll-text .idyll-step p:not(:first-of-type) {
+    margin-top: 27px;
   }
 
   .idyll-scroll-text .idyll-step p:last-of-type {
@@ -124,6 +167,9 @@
     font-size: small;
   }
 
+  .idyll-text-container {
+    max-width: 100%;
+  }
   .gridyll-control-container > div {
     display: flex;
     font-size: small;
@@ -145,6 +191,11 @@
 
     .idyll-root {
         grid-template-columns:  auto 15rem 15rem auto;
+    }
+
+    .idyll-root, .idyll-scroll {
+        grid-template-columns:  auto 15rem 15rem auto;
+        gap: 0 1em;
     }
     .idyll-text-container {
       grid-column: 1 / 5;

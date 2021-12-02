@@ -21,6 +21,7 @@
     "fs-extra": "^10.0.0",
     "get-mp3-duration": "^1.0.0",
     "get-video-duration": "^4.0.0",
+    "gif-frames": "^1.0.1",
     "gray-matter": "^4.0.3",
     "idyll": "^5.5.3",
     "idyll-ast": "^2.2.6",

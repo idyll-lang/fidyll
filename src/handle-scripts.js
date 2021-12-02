@@ -39,8 +39,13 @@ const sortKeys = (keys) => {
 module.exports = (content, target, staticPath) => {
 
   content.scenes = content.scenes.map((scene, sceneIdx) => {
+    const { title, subtitle, ...sceneScriptParams } = scene.parsed.parameters;
     if (scene.parsed.script) {
       let commandFunc = () => {};
+
+      let cleanedScriptName = scene.parsed.script.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '-').replace(/\//g, '-').replace(/-+/g, '-');
+      const filenamePrefix = `script-${cleanedScriptName}-image`;
+
       switch(path.extname(scene.parsed.script).toLowerCase()) {
         case '.py':
           commandFunc = (params, outputFile) => {
@@ -68,9 +73,9 @@ module.exports = (content, target, staticPath) => {
       //   src: `static/script-image-${target}-${sceneIdx}-0.png`
       // }
       scene.parsed.graphic = 'img';
-      let src = `"static/script-image-" + ${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `"${k}-" + scene_${sceneIdx}_${k}`).join(' + "-" + ')} + ".png"`;
+      let src = `"static/${filenamePrefix}-" + ${sortKeys(Object.keys(sceneScriptParams)).map(k => `"${k}-" + scene_${sceneIdx}_${k}`).join(' + "-" + ')} + ".png"`;
       scene.parsed.graphicProps = target === 'static' ? (sceneIdx, stageIdx) => {
-        src = `"static/script-image-" + ${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `"${k}-" + scene_${sceneIdx}_stage_${stageIdx}_${k}`).join(' + "-" + ')} + ".png"`
+        src = `"static/${filenamePrefix}-" + ${sortKeys(Object.keys(sceneScriptParams)).map(k => `"${k}-" + scene_${sceneIdx}_stage_${stageIdx}_${k}`).join(' + "-" + ')} + ".png"`
         return {
           src: {
             type: 'expression',
@@ -86,11 +91,13 @@ module.exports = (content, target, staticPath) => {
 
       scene.stages = scene.stages.map((stage, stageIdx) => {
 
-        const filename = `${staticPath}/script-image-${sortKeys(Object.keys(scene.parsed.parameters)).map(k => `${k}-${stage.parsed.parameters[k]}`).join('-')}.png`;
+        const { title, subtitle, displayParameters, ...scriptParams } = stage.parsed.parameters;
+        const filename = `${staticPath}/${filenamePrefix}-${sortKeys(Object.keys(scriptParams)).map(k => `${k}-${scriptParams[k]}`).join('-')}.png`;
+
 
         if (!fs.existsSync(filename)) {
           try {
-            execSync(commandFunc(stage.parsed.parameters, filename));
+            execSync(commandFunc(scriptParams, filename));
           } catch(e) {
             console.warn('Failed to generate file', filename)
             console.warn(e);
@@ -99,14 +106,14 @@ module.exports = (content, target, staticPath) => {
 
         if (stage.parsed.controls) {
 
-          const allParams = Object.keys(scene.parsed.parameters);
-          const controlParams = {...stage.parsed.controls}
+          const allParams = Object.keys(scriptParams);
+          const { title, subtitle, displayParameters, ...controlParams} = { ...stage.parsed.controls };
           allParams.forEach((k) => {
             if(controlParams[k]) {
-              // todo - make sure stage.parsed.parameters[k] is in the set
+              // todo - make sure scriptParams[k] is in the set
               return;
             }
-            controlParams[k] = { set: [stage.parsed.parameters[k]] }
+            controlParams[k] = { set: [scriptParams[k]] }
           })
 
           const xprod = cartesian(Object.keys(controlParams || {}).map(k => {
@@ -131,7 +138,7 @@ module.exports = (content, target, staticPath) => {
               return memo;
             }, {});
 
-            const controlFile = `${staticPath}/script-image-${sortKeys(Object.keys(paramObj)).map(k => `${k}-${paramObj[k]}`).join('-')}.png`;
+            const controlFile = `${staticPath}/${filenamePrefix}-${sortKeys(Object.keys(paramObj)).map(k => `${k}-${paramObj[k]}`).join('-')}.png`;
 
             if (!fs.existsSync(controlFile)) {
               try {

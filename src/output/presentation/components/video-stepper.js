@@ -4,7 +4,7 @@ class VideoStepper extends React.Component {
 
   componentDidMount() {
     window.status = "ready";
-
+    document.body.className += ' video';
     window._setSlide = (_slideIndex) => {
       this.props.updateProps({
         index: _slideIndex

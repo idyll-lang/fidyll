@@ -101,6 +101,9 @@ const outputHTML = `
           ${files.includes('data-video.mp4') ?
             `<a class="article-link" href="./data-video.mp4">Video</a>`
           : ''}
+          ${files.includes('data-video.srt') ?
+            `<a class="article-link" href="./data-video.srt">Subtitles</a>`
+          : ''}
 
           ${directories.includes('presentation') ?
           `<div style="margin-top: 2em;">

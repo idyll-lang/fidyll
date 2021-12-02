@@ -33,13 +33,184 @@ const sortKeys = (keys) => {
   return keys;
 }
 
-module.exports = (header, content) => {
+
+module.exports = (header, content, gifMap) => {
 
 
   let id = 0;
 
   const paramToVar = (param, idx) => {
     return `scene_${idx}_${param}`;
+  }
+
+  const getStaticRenditionGif = ({ sceneIdx, stageIdx, animations, graphic, headerData, graphicProps, parameters }) => {
+    const gifFrames = gifMap[parameters.src];
+    const config = (animations || {}).static || {};
+    const frames = config.frames || 2;
+    const columns = Math.min(frames, config.columns || 2);
+
+    if (frames > 1) {
+      return {
+        id: id++,
+        type: 'component',
+        name: 'div',
+        properties: {
+          className: {
+            type: 'value',
+            value: 'idyll-static-plex-holder'
+          },
+          style: {
+            type: 'expression',
+            value: `{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(${columns}, 1fr)'
+            }`
+          }
+        },
+        children: _range(0, 1, 1 / (frames - 1)).map((t, i) => {
+          const frame = gifFrames[Math.floor(t * (gifFrames.length-1))];
+          return {
+            id: id++,
+            type: 'component',
+            name: graphic,
+            properties: {...Object.keys(parameters || {}).reduce((memo, param) => {
+              if (param === 'src') {
+                memo[param] = {
+                  type: 'value',
+                  value: frame
+                }
+              } else {
+                memo[param] = {
+                  type: 'variable',
+                  value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
+                }
+              }
+              return memo;
+            }, {
+              style: {
+                type: 'expression',
+                value: `{
+                  gridColumn: ${(i % columns) + 1} / ${(i % columns) + 2},
+                  marginTop: 9,
+                  marginBottom: 9
+                }`
+              },
+              data: {
+                type: 'expression',
+                value: `{ ${Object.keys(headerData || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
+              }
+            }),
+            ...(graphicProps ? graphicProps(sceneIdx, stageIdx) : {})
+            }
+          }
+        })
+      }
+    }
+
+    parameters = {...parameters, src: config.singleFrame === 'first' ? gifFrames[0] : gifFrames[gifFrames.length - 1]}
+
+    return {
+      id: id++,
+      type: 'component',
+      name: graphic,
+      properties: {...Object.keys(parameters || {}).reduce((memo, param) => {
+        memo[param] = {
+          type: 'variable',
+          value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
+        }
+        return memo;
+      }, {
+        data: {
+          type: 'expression',
+          value: `{ ${Object.keys(headerData || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
+        }
+      }),
+      ...(graphicProps ? graphicProps(sceneIdx, stageIdx) : {})
+      }
+    };
+  }
+
+  const getStaticRendition = ({ sceneIdx, stageIdx, animations, graphic, headerData, graphicProps, parameters }) => {
+
+    const config = animations.static || {};
+    const frames = config.frames || 2;
+    const columns = config.columns || 2;
+    if (frames > 1) {
+      return {
+        id: id++,
+        type: 'component',
+        name: 'div',
+        properties: {
+          className: {
+            type: 'value',
+            value: 'idyll-static-plex-holder'
+          },
+          style: {
+            type: 'expression',
+            value: `{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(${columns}, 1fr)'
+            }`
+          }
+        },
+        children: _range(0, 1, 1 / (frames - 1)).map((t, i) => {
+          return {
+            id: id++,
+            type: 'component',
+            name: graphic,
+            properties: {...Object.keys(parameters || {}).reduce((memo, param) => {
+              if (animations[param]) {
+                const { start, end } = animations[param];
+                const currentValue = start + t * (end - start);
+                memo[param] = {
+                  type: 'value',
+                  value: currentValue
+                }
+              } else {
+                memo[param] = {
+                  type: 'variable',
+                  value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
+                }
+              }
+              return memo;
+            }, {
+              style: {
+                type: 'expression',
+                value: `{
+                  gridColumn: ${(i % columns) + 1} / ${(i % columns) + 2}
+                }`
+              },
+              data: {
+                type: 'expression',
+                value: `{ ${Object.keys(headerData || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
+              }
+            }),
+            ...(graphicProps ? graphicProps(sceneIdx, stageIdx) : {})
+            }
+          }
+        })
+      }
+    }
+
+    return {
+      id: id++,
+      type: 'component',
+      name: graphic,
+      properties: {...Object.keys(parameters || {}).reduce((memo, param) => {
+        memo[param] = {
+          type: 'variable',
+          value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
+        }
+        return memo;
+      }, {
+        data: {
+          type: 'expression',
+          value: `{ ${Object.keys(headerData || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
+        }
+      }),
+      ...(graphicProps ? graphicProps(sceneIdx, stageIdx) : {})
+      }
+    };
   }
 
   let sceneIdxVars = 0;
@@ -141,6 +312,12 @@ module.exports = (header, content) => {
       id: id++,
       type: 'component',
       name: 'div',
+      properties: {
+        className: {
+          type: 'value',
+          value: "fidyll-appendix"
+        }
+      },
       children: [
         {
           id: id++,
@@ -413,29 +590,62 @@ module.exports = (header, content) => {
                 ]
               }
             })
-          )
+          );
+
           arr.push({
             id: id++,
             type: 'component',
             name: 'Graphic',
+            properties: stageIdx === 0 ? {...Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
+              memo[param] = {
+                type: 'variable',
+                value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
+              }
+              return memo;
+            }, {
+              data: {
+                type: 'expression',
+                value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
+              }
+            }), ...(contentFragment.parsed.graphicProps ? contentFragment.parsed.graphicProps(sceneIdx, stageIdx) : {}) } : {},
             children: [
-              {
-                id: id++,
-                type: 'component',
-                name: contentFragment.parsed.graphic,
-                properties: {...Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
-                  memo[param] = {
-                    type: 'variable',
-                    value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
-                  }
-                  return memo;
-                }, {
-                  data: {
-                    type: 'expression',
-                    value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
-                  }
-                }), ...(contentFragment.parsed.graphicProps ? contentFragment.parsed.graphicProps(sceneIdx, stageIdx) : {}) }
-              },
+              (stage.parsed.animations && contentFragment.parsed.graphic !== 'img') ? getStaticRendition({
+                sceneIdx,
+                stageIdx,
+                animations: stage.parsed.animations,
+                graphic: contentFragment.parsed.graphic,
+                headerData: header.data,
+                graphicProps: contentFragment.parsed.graphicProps,
+                parameters: stage.parsed.parameters
+              }) :
+              (
+                contentFragment.parsed.graphic === 'img' && stage.parsed.parameters.src && stage.parsed.parameters.src.endsWith('.gif') ? getStaticRenditionGif({
+                  sceneIdx,
+                  stageIdx,
+                  animations: stage.parsed.animations,
+                  graphic: contentFragment.parsed.graphic,
+                  headerData: header.data,
+                  graphicProps: contentFragment.parsed.graphicProps,
+                  parameters: stage.parsed.parameters
+                }) :
+                {
+                  id: id++,
+                  type: 'component',
+                  name: contentFragment.parsed.graphic,
+                  properties: {...Object.keys(stage.parsed.parameters || {}).reduce((memo, param) => {
+                    memo[param] = {
+                      type: 'variable',
+                      value: `scene_${sceneIdx}_stage_${stageIdx}_${param}`
+                    }
+                    return memo;
+                  }, {
+                    data: {
+                      type: 'expression',
+                      value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
+                    }
+                  }), ...(contentFragment.parsed.graphicProps ? contentFragment.parsed.graphicProps(sceneIdx, stageIdx) : {}) }
+                }
+              ),
               // TODO - uncomment me to re-enable controls.
               stage.parsed.controls ?
               {

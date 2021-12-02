@@ -1,5 +1,11 @@
 
 
+body, html {
+    font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+    font-family: system-ui;
+  }
+
+
 html {
     font-size: 16px;
 }
@@ -40,6 +46,12 @@ img {
     max-height: 100%;
     width: 150%;
     margin: 6em -25% 2em -25%;
+}
+
+.idyll-static-plex-holder img {
+    max-width: 100%;
+    width: 100%;
+    margin: 9px auto;
 }
 
 .appendix-graphic-holder {
@@ -127,4 +139,8 @@ justify-content: space-between;
     .appendix-graphic-plex {
         grid-template-columns:  1fr 1fr;
     }
+}
+
+.fidyll-appendix {
+    display: none;
 }

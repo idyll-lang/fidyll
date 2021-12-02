@@ -22,31 +22,44 @@ module.exports = async (header, content) => {
 
   let initialArray = [{ text: header.title }];
 
-  const voiceovers = content.scenes.reduce((memo, contentFragment) => {
+  console.log('get audio data');
+  const voiceovers = content.scenes.reduce((memo, contentFragment, sceneIdx) => {
     memo.push({
-      text: ((contentFragment.forward || '') + ' ' + (contentFragment.text || '')).trim()
+      text: ((contentFragment.forward || '') + ' ' + (contentFragment.text || '')).trim(),
+      stageIdx: -1,
+      sceneIdx: sceneIdx
     })
 
     contentFragment.stages.forEach((stage, idx) => {
       memo.push({
-        text: stage.text || ''
+        text: stage.text || '',
+        stageIdx: idx,
+        sceneIdx: sceneIdx
       })
     })
     return memo;
-  }, initialArray).map(({text}) => {
-    return { text: text
-        .replace(/\_/g, ' ')
-        .replace(/[[^\/\\]+[\/\\]\]/g, '')
-        .replace(/[\s\n]+/g, ' ').trim() };
+  }, initialArray).map((d) => {
+
+    // todo replace this hack with AST.getText(compile(text))
+    return {
+      ...d,
+      text: d.text.toLowerCase()
+      .replace(/[\s\n]+/g, ' ').trim()
+      .replace(/\[cite [^\/]+\/\]/gi,'')
+      .replace(/\[equation\]/gi,'')
+      .replace(/\[\/equation\]/gi,'')
+      .replace(/\[equation .*\/\]/gi,'')
+      .replace(/\_/g, ' ')
+      .replace(/[[^\/\\]+[\/\\]\]/g, '')
+    };
   }).filter(({ text }) => {
     return text !== ''
   });
 
-  console.log('voiceovers', voiceovers)
-
+  console.log(voiceovers);
 
   const client = new textToSpeech.TextToSpeechClient();
-  const audioData = await Promise.all(voiceovers.map(async ({ text }) => {
+  const audioData = await Promise.all(voiceovers.map(async ({ text, sceneIdx, stageIdx }) => {
 
     // Construct the request
     const request = {
@@ -70,6 +83,16 @@ module.exports = async (header, content) => {
       duration = getMP3Duration(response.audioContent);
     } catch(e) {
       console.warn(e)
+    }
+
+    const scene = content.scenes[sceneIdx];
+    if (scene) {
+      const stage = scene.stages[stageIdx];
+      if (stage && stage.parsed.video && stage.parsed.video.duration) {
+        duration = stage.parsed.video.duration;
+      }
+    } else {
+      console.log('no scene for', sceneIdx, stageIdx)
     }
 
     return {

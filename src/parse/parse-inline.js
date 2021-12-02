@@ -1,7 +1,7 @@
 
 
 module.exports = (text, variableMap, controls) => {
-    return text.replace(/\{([^\}]+)\}/g, (match, groups) => {
+    return text.replace(/\{\{([^\}]+)\}\}/g, (match, groups) => {
         const body = groups[0].trim();
 
         if (variableMap[body]) {

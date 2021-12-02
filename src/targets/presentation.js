@@ -151,19 +151,42 @@ module.exports = (header, content) => {
               {
                 id: id++,
                 type: 'component',
-                name: contentFragment.parsed.graphic,
-                properties: { ...Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
-                  memo[param] = {
-                    type: 'variable',
-                    value: paramToVar(param, sceneIdxContent-1)
+                name: 'Graphic',
+                properties: {
+                  displayParameters: {
+                    type: 'value',
+                    value: contentFragment.parsed.parameters.displayParameters === undefined ? false : contentFragment.parsed.parameters.displayParameters
+                  },
+                  ...Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
+                    if (param === 'data' && header.data) {
+                      console.warn('Warning: overwriting built in data parameter');
+                    }
+                    memo[param] = {
+                      type: 'variable',
+                      value: paramToVar(param, sceneIdxContent-1)
+                    }
+                    return memo;
+                  }, {})
+                },
+                children: [
+                  {
+                    id: id++,
+                    type: 'component',
+                    name: contentFragment.parsed.graphic,
+                    properties: { ...Object.keys(contentFragment.parsed.parameters || {}).reduce((memo, param) => {
+                      memo[param] = {
+                        type: 'variable',
+                        value: paramToVar(param, sceneIdxContent-1)
+                      }
+                      return memo;
+                    }, {
+                      data: {
+                        type: 'expression',
+                        value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
+                      }
+                    }), ...(contentFragment.parsed.graphicProps || {}) }
                   }
-                  return memo;
-                }, {
-                  data: {
-                    type: 'expression',
-                    value: `{ ${Object.keys(header.data || {}).map(k => { return `${k}:${k}` }).join(', ')} }`
-                  }
-                }), ...(contentFragment.parsed.graphicProps || {}) }
+                ]
               }
             ]
           })
@@ -358,7 +381,29 @@ module.exports = (header, content) => {
                   ]
                 }
               })]
-            } : null)].filter(d => d)
+            } : null), Object.keys(stage.parsed.animations || {}).length ? {
+              id: id++,
+              type: 'component',
+              name: 'animator',
+              properties: {
+                runOnMount: {
+                  type: 'value',
+                  value: 'true'
+                },
+                animations: {
+                  type: 'expression',
+                  value: JSON.stringify(Object.keys(stage.parsed.animations).map((k) => { return { ...stage.parsed.animations[k], key: k } }))
+                },
+                ...Object.keys(stage.parsed.animations).reduce((memo, k) => {
+                  memo[k] = {
+                    type: 'variable',
+                    value: paramToVar(k, _sceneIdx)
+                  }
+                  return memo;
+                }, {})
+              },
+              children: []
+             } : null].filter(d => d)
         })
       })
 
@@ -384,7 +429,7 @@ module.exports = (header, content) => {
         },
         ...content.scenes.reduce((memo, contentFragment) => {
           Object.keys(contentFragment.parsed.parameters || {}).forEach(param => {
-            console.log(param, paramToVar(param, sceneIdxVarsControls));
+            // console.log(param, paramToVar(`param, sceneIdxVarsControls));
             memo[paramToVar(param, sceneIdxVarsControls)] = {
               type: 'variable',
               value: paramToVar(param, sceneIdxVarsControls)
