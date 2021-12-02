@@ -2,7 +2,7 @@
 
 Research project for cross-platform Idyll projects.
 
-**Note: This code is not yet hosted on NPM. Use at your own peril for now.**
+**Note: This code is a research prototype not yet hosted on NPM or ready for public consumption. Use at your own peril for now.**
 
 ## Installation
 
