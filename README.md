@@ -1,6 +1,6 @@
 # Fidyll
 
-Research project for cross-platform Idyll projects.
+A high-level, multiformat compiler for data stories and explorable explanations. 
 
 **Note: This code is a research prototype not yet hosted on NPM or ready for public consumption. Use at your own peril for now.**
 
